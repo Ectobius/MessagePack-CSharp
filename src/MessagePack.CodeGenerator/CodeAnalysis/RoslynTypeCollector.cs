@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MessagePack.Configuration;
 
 namespace MessagePack.CodeGenerator
 {
@@ -31,7 +32,7 @@ namespace MessagePack.CodeGenerator
         }
     }
 
-    public class TypeCollector
+    public class RoslynTypeCollector
     {
         const string CodegeneratorOnlyPreprocessorSymbol = "INCLUDE_ONLY_CODE_GENERATION";
 
@@ -206,7 +207,7 @@ namespace MessagePack.CodeGenerator
 
         // --- 
 
-        public TypeCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal, bool isForceUseMap)
+        public RoslynTypeCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal, bool isForceUseMap)
         {
             this.csProjPath = csProjPath;
             var compilation = RoslynExtensions.GetCompilationFromProject(csProjPath, conditinalSymbols.Concat(new[] { CodegeneratorOnlyPreprocessorSymbol }).ToArray()).GetAwaiter().GetResult();
@@ -244,7 +245,7 @@ namespace MessagePack.CodeGenerator
         }
 
         // EntryPoint
-        public (ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, GenericSerializationInfo[] genericInfo, UnionSerializationInfo[] unionInfo) Collect()
+        public CollectedInfo Collect()
         {
             ResetWorkspace();
 
@@ -253,7 +254,13 @@ namespace MessagePack.CodeGenerator
                 CollectCore(item);
             }
 
-            return (collectedObjectInfo.ToArray(), collectedEnumInfo.ToArray(), collectedGenericInfo.Distinct().ToArray(), collectedUnionInfo.ToArray());
+            return  new CollectedInfo
+            {
+                ObjectInfo = collectedObjectInfo.ToArray(),
+                EnumInfo = collectedEnumInfo.ToArray(),
+                GenericInfo = collectedGenericInfo.Distinct().ToArray(),
+                UnionInfo = collectedUnionInfo.ToArray()
+            };
         }
 
         // Gate of recursive collect

@@ -1,0 +1,17 @@
+{
+  "ConfigurationTest.Person": {
+    "NextValidKey": 2,
+    "Members": [
+      {
+        "Name": "Name",
+        "TypeFullName": "System.String",
+        "Key": 0
+      },
+      {
+        "Name": "Age",
+        "TypeFullName": "System.Int32",
+        "Key": 1
+      }
+    ]
+  }
+}

@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MessagePack.CodeGenerator
 {
@@ -14,6 +13,7 @@ namespace MessagePack.CodeGenerator
     {
         public string InputPath { get; private set; }
         public string OutputPath { get; private set; }
+        public string ConfigurationPath { get; private set; }
         public List<string> ConditionalSymbols { get; private set; }
         public string ResolverName { get; private set; }
         public string NamespaceRoot { get; private set; }
@@ -32,7 +32,8 @@ namespace MessagePack.CodeGenerator
             {
                 { "i|input=", "[required]Input path of analyze csproj", x => { InputPath = x; } },
                 { "o|output=", "[required]Output file path", x => { OutputPath = x; } },
-                { "c|conditionalsymbol=", "[optional, default=empty]conditional compiler symbol", x => { ConditionalSymbols.AddRange(x.Split(',')); } },
+                { "c|config=", "[required]Model configuration file", x => { ConfigurationPath = x; } },
+                { "s|conditionalsymbol=", "[optional, default=empty]conditional compiler symbol", x => { ConditionalSymbols.AddRange(x.Split(',')); } },
                 { "r|resolvername=", "[optional, default=GeneratedResolver]Set resolver name", x => { ResolverName = x; } },
                 { "n|namespace=", "[optional, default=MessagePack]Set namespace root name", x => { NamespaceRoot = x; } },
                 { "m|usemapmode", "[optional, default=false]Force use map mode serialization", x => { IsUseMap = true; } },
@@ -71,6 +72,8 @@ namespace MessagePack.CodeGenerator
 
     class Program
     {
+        private static Stopwatch stopwatch;
+
         static void Main(string[] args)
         {
             var cmdArgs = new CommandlineArguments(args);
@@ -81,47 +84,36 @@ namespace MessagePack.CodeGenerator
 
             // Generator Start...
 
-            var sw = Stopwatch.StartNew();
-            Console.WriteLine("Project Compilation Start:" + cmdArgs.InputPath);
+            stopwatch = Stopwatch.StartNew();
 
-            var collector = new TypeCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true, cmdArgs.IsUseMap);
-
-            Console.WriteLine("Project Compilation Complete:" + sw.Elapsed.ToString());
-            Console.WriteLine();
-
-            sw.Restart();
-            Console.WriteLine("Method Collect Start");
-
-            var (objectInfo, enumInfo, genericInfo, unionInfo) = collector.Collect();
-
-            Console.WriteLine("Method Collect Complete:" + sw.Elapsed.ToString());
+            var collectedInfo = CollectUsingReflection(cmdArgs);
 
             Console.WriteLine("Output Generation Start");
-            sw.Restart();
+            stopwatch.Restart();
 
-            var objectFormatterTemplates = objectInfo
+            var objectFormatterTemplates = collectedInfo.ObjectInfo
                 .GroupBy(x => x.Namespace)
                 .Select(x => new FormatterTemplate()
                 {
-                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
+                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters",
                     objectSerializationInfos = x.ToArray(),
                 })
                 .ToArray();
 
-            var enumFormatterTemplates = enumInfo
+            var enumFormatterTemplates = collectedInfo.EnumInfo
                 .GroupBy(x => x.Namespace)
                 .Select(x => new EnumTemplate()
                 {
-                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
+                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters",
                     enumSerializationInfos = x.ToArray()
                 })
                 .ToArray();
 
-            var unionFormatterTemplates = unionInfo
+            var unionFormatterTemplates = collectedInfo.UnionInfo
                 .GroupBy(x => x.Namespace)
                 .Select(x => new UnionTemplate()
                 {
-                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
+                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters",
                     unionSerializationInfos = x.ToArray()
                 })
                 .ToArray();
@@ -131,7 +123,11 @@ namespace MessagePack.CodeGenerator
                 Namespace = cmdArgs.GetNamespaceDot() + "Resolvers",
                 FormatterNamespace = cmdArgs.GetNamespaceDot() + "Formatters",
                 ResolverName = cmdArgs.ResolverName,
-                registerInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo).ToArray()
+                registerInfos = collectedInfo.GenericInfo.Cast<IResolverRegisterInfo>()
+                    .Concat(collectedInfo.EnumInfo)
+                    .Concat(collectedInfo.UnionInfo)
+                    .Concat(collectedInfo.ObjectInfo)
+                    .ToArray()
             };
 
             var sb = new StringBuilder();
@@ -157,10 +153,42 @@ namespace MessagePack.CodeGenerator
 
             Output(cmdArgs.OutputPath, sb.ToString());
 
-            Console.WriteLine("String Generation Complete:" + sw.Elapsed.ToString());
+            Console.WriteLine("String Generation Complete:" + stopwatch.Elapsed.ToString());
         }
 
-        static void Output(string path, string text)
+        private static CollectedInfo CollectUsingRoslyn(CommandlineArguments cmdArgs)
+        {
+            Console.WriteLine("Project Compilation Start:" + cmdArgs.InputPath);
+
+            var collector = new RoslynTypeCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true, cmdArgs.IsUseMap);
+
+            Console.WriteLine("Project Compilation Complete:" + stopwatch.Elapsed.ToString());
+            Console.WriteLine();
+
+            stopwatch.Restart();
+            Console.WriteLine("Method Collect Start");
+
+            var infos = collector.Collect();
+
+            Console.WriteLine("Method Collect Complete:" + stopwatch.Elapsed.ToString());
+
+            return infos;
+        }
+
+        private static CollectedInfo CollectUsingReflection(CommandlineArguments cmdArgs)
+        {
+            Console.WriteLine("Loading assembly: {0}", cmdArgs.InputPath);
+
+            var collector = new ReflectionTypeCollector(cmdArgs.InputPath, cmdArgs.ConfigurationPath);
+
+            var infos = collector.Collect();
+
+            Console.WriteLine("Serialization info collected {0}", stopwatch.Elapsed);
+
+            return infos;
+        }
+
+        private static void Output(string path, string text)
         {
             path = path.Replace("global::", "");
 

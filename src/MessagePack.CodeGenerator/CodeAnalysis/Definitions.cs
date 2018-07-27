@@ -12,6 +12,14 @@ namespace MessagePack.CodeGenerator
         string FormatterName { get; }
     }
 
+    public class CollectedInfo
+    {
+        public ObjectSerializationInfo[] ObjectInfo { get; set; }
+        public EnumSerializationInfo[] EnumInfo { get; set; }
+        public GenericSerializationInfo[] GenericInfo { get; set; }
+        public UnionSerializationInfo[] UnionInfo { get; set; }
+    }
+
     public class ObjectSerializationInfo : IResolverRegisterInfo
     {
         public string Name { get; set; }

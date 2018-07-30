@@ -1,6 +1,6 @@
 {
   "ConfigurationTest.Person": {
-    "NextValidKey": 2,
+    "NextValidKey": 5,
     "Members": [
       {
         "Name": "Name",
@@ -10,6 +10,36 @@
       {
         "Name": "Age",
         "TypeFullName": "System.Int32",
+        "Key": 1
+      },
+      {
+        "Name": "Pets",
+        "TypeFullName": "System.Collections.Generic.List`1[[ConfigurationTest.Pet, ConfigurationTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "Key": 2
+      },
+      {
+        "Name": "Numbers",
+        "TypeFullName": "System.Int32[]",
+        "Key": 3
+      },
+      {
+        "Name": "Height",
+        "TypeFullName": "System.Single",
+        "Key": 4
+      }
+    ]
+  },
+  "ConfigurationTest.Pet": {
+    "NextValidKey": 2,
+    "Members": [
+      {
+        "Name": "Name",
+        "TypeFullName": "System.String",
+        "Key": 0
+      },
+      {
+        "Name": "Power",
+        "TypeFullName": "System.Single",
         "Key": 1
       }
     ]

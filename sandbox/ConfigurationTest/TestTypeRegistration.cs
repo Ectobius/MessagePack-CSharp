@@ -7,7 +7,8 @@ namespace ConfigurationTest
         public TestTypeRegistration()
         {
             Register(
-                typeof(Person)
+                typeof(Person),
+                typeof(Pet)
             );
         }
     }

@@ -5,7 +5,9 @@ using System.Reflection;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.CodeGenerator.CodeAnalysis;
 using MessagePack.CodeGenerator.CodeAnalysis.Configuration;
+using MessagePack.CodeGenerator.Utils;
 using MessagePack.Configuration;
 using Newtonsoft.Json;
 
@@ -15,6 +17,14 @@ namespace MessagePack.CodeGenerator
     {
         private readonly string _assemblyFilePath;
         private readonly string _configFilePath;
+
+        private HashSet<Type> _collectedTypes = new HashSet<Type>();
+        private List<ObjectSerializationInfo> _collectedObjectInfo = new List<ObjectSerializationInfo>();
+        private List<EnumSerializationInfo> _collectedEnumInfo = new List<EnumSerializationInfo>();
+        private List<GenericSerializationInfo> _collectedGenericInfo = new List<GenericSerializationInfo>();
+        private List<UnionSerializationInfo> _collectedUnionInfo = new List<UnionSerializationInfo>();
+        private Dictionary<Type, ModelTypeConfiguration> _registeredTypeConfigs = new Dictionary<Type, ModelTypeConfiguration>();
+
 
         public ReflectionTypeCollector(string assemblyFilePath, string configFilePath)
         {
@@ -29,20 +39,23 @@ namespace MessagePack.CodeGenerator
             var typeRegistrationType = assembly.DefinedTypes.Single(ti => ti.BaseType == typeof(TypeRegistration));
             var typeRegistration = (TypeRegistration) Activator.CreateInstance(typeRegistrationType);
 
-            var config = ReadAndUpdateConfiguration(typeRegistration);
+            _registeredTypeConfigs = ReadAndUpdateConfiguration(typeRegistration);
 
-            var objectSerializationInfos = config.Select(pair => GetObjectSerializationInfo(pair.Value));
-
+            foreach (var type in _registeredTypeConfigs.Keys)
+            {
+                CollectType(type);
+            }
+            
             return new CollectedInfo
             {
-                ObjectInfo = objectSerializationInfos.ToArray(),
-                UnionInfo = new UnionSerializationInfo[0],
-                EnumInfo = new EnumSerializationInfo[0],
-                GenericInfo = new GenericSerializationInfo[0]
+                ObjectInfo = _collectedObjectInfo.ToArray(),
+                UnionInfo = _collectedUnionInfo.ToArray(),
+                EnumInfo = _collectedEnumInfo.ToArray(),
+                GenericInfo = _collectedGenericInfo.ToArray()
             };
         }
 
-        private Dictionary<string, ModelTypeConfiguration> ReadAndUpdateConfiguration(TypeRegistration typeRegistration)
+        private Dictionary<Type, ModelTypeConfiguration> ReadAndUpdateConfiguration(TypeRegistration typeRegistration)
         {
             var config = ReadConfiguration();
 
@@ -65,7 +78,7 @@ namespace MessagePack.CodeGenerator
 
             WriteConfiguration(config);
 
-            return config;
+            return BuildRegisteredTypesLookup(config);
         }
 
         private Dictionary<string, ModelTypeConfiguration> ReadConfiguration()
@@ -169,9 +182,55 @@ namespace MessagePack.CodeGenerator
             return null;
         }
 
-        private ObjectSerializationInfo GetObjectSerializationInfo(ModelTypeConfiguration configuration)
+        private Dictionary<Type, ModelTypeConfiguration> BuildRegisteredTypesLookup(
+            Dictionary<string, ModelTypeConfiguration> config)
         {
-            var type = configuration.Type;
+            Dictionary<Type, ModelTypeConfiguration> dictionary = new Dictionary<Type, ModelTypeConfiguration>();
+
+            foreach (var modelConfiguration in config.Values)
+            {
+                dictionary[modelConfiguration.Type] = modelConfiguration;
+            }
+
+            return dictionary;
+        }
+
+        private void CollectType(Type type)
+        {
+            if (!_collectedTypes.Add(type))
+            {
+                return;
+            }
+
+            if (CollectorCore.EmbeddedTypes.Contains(type.FullName))
+            {
+                return;
+            }
+
+            if (type.IsArray)
+            {
+                CollectArray(type);
+                return;
+            }
+
+            if (type.IsGenericType)
+            {
+                CollectGeneric(type);
+                return;
+            }
+
+            CollectObject(type);
+        }
+
+        private void CollectObject(Type type)
+        {
+            if (!_registeredTypeConfigs.ContainsKey(type))
+            {
+                throw new Exception($"Type ${type} is not registered");
+            }
+
+            var typeConfiguration = _registeredTypeConfigs[type];
+
             var info = new ObjectSerializationInfo
             {
                 Name = type.Name,
@@ -182,13 +241,125 @@ namespace MessagePack.CodeGenerator
                 IsIntKey = true,
                 NeedsCastOnAfter = false,
                 NeedsCastOnBefore = false,
-                Members = configuration.Members.Select(this.GetMemberSerializationInfo).ToArray()
+                Members = typeConfiguration.Members.Select(this.CollectMemberSerializationInfo).ToArray()
             };
 
-            return info;
+            _collectedObjectInfo.Add(info);
         }
 
-        private MemberSerializationInfo GetMemberSerializationInfo(MemberConfiguration memberConfiguration)
+        void CollectArray(Type type)
+        {
+            var elemType = type.GetElementType();
+            CollectType(elemType);
+
+            var info = new GenericSerializationInfo
+            {
+                FullName = type.FullName,
+            };
+
+            var rank = type.GetArrayRank();
+            if (rank == 1)
+            {
+                info.FormatterName = $"global::MessagePack.Formatters.ArrayFormatter<{elemType.FullName}>";
+            }
+            else if (rank == 2)
+            {
+                info.FormatterName = $"global::MessagePack.Formatters.TwoDimentionalArrayFormatter<{elemType.FullName}>";
+            }
+            else if (rank == 3)
+            {
+                info.FormatterName = $"global::MessagePack.Formatters.ThreeDimentionalArrayFormatter<{elemType.FullName}>";
+            }
+            else if (rank == 4)
+            {
+                info.FormatterName = $"global::MessagePack.Formatters.FourDimentionalArrayFormatter<{elemType.FullName}>";
+            }
+            else
+            {
+                throw new InvalidOperationException("does not supports array dimention, " + info.FullName);
+            }
+
+            _collectedGenericInfo.Add(info);
+        }
+
+        void CollectGeneric(Type type)
+        {
+            var genericType = type.GetGenericTypeDefinition();
+            var genericTypeString = genericType.FullName;
+            var fullName = TypeNameFormatter.GetGenericTypeFullName(type);
+
+            // special case
+            if (fullName == "global::System.ArraySegment<byte>" || fullName == "global::System.ArraySegment<byte>?")
+            {
+                return;
+            }
+
+            // nullable
+            if (genericTypeString == "T?")
+            {
+                CollectType(type.GenericTypeArguments[0]);
+
+                if (!CollectorCore.EmbeddedTypes.Contains(type.GenericTypeArguments[0].ToString()))
+                {
+                    var info = new GenericSerializationInfo
+                    {
+                        FormatterName = $"global::MessagePack.Formatters.NullableFormatter<{type.GenericTypeArguments[0].FullName}>",
+                        FullName = fullName,
+                    };
+
+                    _collectedGenericInfo.Add(info);
+                }
+                return;
+            }
+
+            // collection
+            if (CollectorCore.KnownGenericTypes.TryGetValue(genericTypeString, out var formatter))
+            {
+                foreach (var item in type.GenericTypeArguments)
+                {
+                    CollectType(item);
+                }
+
+                var typeArgs = string.Join(", ", type.GenericTypeArguments.Select(x => x.FullName));
+                var f = formatter.Replace("TREPLACE", typeArgs);
+
+                var info = new GenericSerializationInfo
+                {
+                    FormatterName = f,
+                    FullName = fullName,
+                };
+
+                _collectedGenericInfo.Add(info);
+
+                if (genericTypeString == "System.Linq.ILookup`2")
+                {
+                    formatter = CollectorCore.KnownGenericTypes["System.Linq.IGrouping`2"];
+                    f = formatter.Replace("TREPLACE", typeArgs);
+
+                    var groupingInfo = new GenericSerializationInfo
+                    {
+                        FormatterName = f,
+                        FullName = $"global::System.Linq.IGrouping<{typeArgs}>",
+                    };
+
+                    _collectedGenericInfo.Add(groupingInfo);
+
+                    formatter = CollectorCore.KnownGenericTypes["System.Collections.Generic.IEnumerable`1"];
+                    typeArgs = type.GenericTypeArguments[1].FullName;
+                    f = formatter.Replace("TREPLACE", typeArgs);
+
+                    var enumerableInfo = new GenericSerializationInfo
+                    {
+                        FormatterName = f,
+                        FullName = $"global::System.Collections.Generic.IEnumerable<{typeArgs}>",
+                    };
+
+                    _collectedGenericInfo.Add(enumerableInfo);
+                }
+            }
+        }
+
+        private MemberSerializationInfo CollectMemberSerializationInfo(MemberConfiguration memberConfiguration)
         {
             var memberInfo = memberConfiguration.MemberInfo;
             var memberType = GetMemberInfoType(memberInfo);
@@ -196,7 +367,7 @@ namespace MessagePack.CodeGenerator
             {
                 IntKey = memberConfiguration.Key,
                 Name = memberInfo.Name,
-                Type = memberType.FullName,
+                Type = TypeNameFormatter.GetTypeFullName(memberType),
                 ShortTypeName = memberType.Name,
                 IsProperty = memberInfo.MemberType == MemberTypes.Property,
                 IsField = memberInfo.MemberType == MemberTypes.Field
@@ -212,6 +383,8 @@ namespace MessagePack.CodeGenerator
                 info.IsReadable = fieldInfo.IsPublic;
                 info.IsWritable = fieldInfo.IsPublic && !fieldInfo.IsInitOnly;
             }
+
+            CollectType(memberType);
 
             return info;
         }

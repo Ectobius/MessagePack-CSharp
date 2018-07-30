@@ -16,7 +16,13 @@ namespace ConfigurationTest
             var person = new Person
             {
                 Name = "Alex",
-                Age = 28
+                Age = 28,
+                Pets = new List<Pet>
+                {
+                    new Pet { Name = "Jack", Power = 11f },
+                    new Pet { Name = "Tima", Power = 7.9f },
+                },
+                Numbers = new [] { 3, 9, 17, 32}
             };
 
             var bytes = MessagePackSerializer.Serialize(person);

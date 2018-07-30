@@ -189,6 +189,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CodeAnalysis\CollectorCore.cs" />
     <Compile Include="CodeAnalysis\Configuration\ModelTypeConfiguration.cs" />
     <Compile Include="CodeAnalysis\Configuration\MemberConfiguration.cs" />
     <Compile Include="CodeAnalysis\Definitions.cs" />
@@ -220,6 +221,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\EnvironmentHelper.cs" />
     <Compile Include="Utils\RoslynExtensions.cs" />
+    <Compile Include="Utils\TypeNameFormatter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -10,6 +10,7 @@ namespace MessagePack.CodeGenerator
     {
         string FullName { get; }
         string FormatterName { get; }
+        bool InjectFactory { get; }
     }
 
     public class CollectedInfo
@@ -35,6 +36,8 @@ namespace MessagePack.CodeGenerator
         public bool NeedsCastOnBefore { get; set; }
         public bool NeedsCastOnAfter { get; set; }
         public string FormatterName => (Namespace == null ? Name : Namespace + "." + Name) + "Formatter";
+        public bool InjectFactory => true;
+        public int TypeId { get; set; }
 
         public int WriteCount
         {
@@ -149,6 +152,7 @@ namespace MessagePack.CodeGenerator
         public string UnderlyingType { get; set; }
 
         public string FormatterName => (Namespace == null ? Name : Namespace + "." + Name) + "Formatter";
+        public bool InjectFactory => false;
     }
 
     public class GenericSerializationInfo : IResolverRegisterInfo, IEquatable<GenericSerializationInfo>
@@ -156,6 +160,7 @@ namespace MessagePack.CodeGenerator
         public string FullName { get; set; }
 
         public string FormatterName { get; set; }
+        public bool InjectFactory => false;
 
         public bool Equals(GenericSerializationInfo other)
         {
@@ -174,6 +179,7 @@ namespace MessagePack.CodeGenerator
         public string Name { get; set; }
         public string FullName { get; set; }
         public string FormatterName => (Namespace == null ? Name : Namespace + "." + Name) + "Formatter";
+        public bool InjectFactory => false;
         public UnionSubTypeInfo[] SubTypes { get; set; }
     }
 

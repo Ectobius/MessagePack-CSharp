@@ -39,7 +39,7 @@ namespace MessagePack.CodeGenerator
             var typeRegistrationType = assembly.DefinedTypes.Single(ti => ti.BaseType == typeof(TypeRegistration));
             var typeRegistration = (TypeRegistration) Activator.CreateInstance(typeRegistrationType);
 
-            _registeredTypeConfigs = ReadAndUpdateConfiguration(typeRegistration);
+            ReadAndUpdateConfiguration(typeRegistration);
 
             foreach (var type in _registeredTypeConfigs.Keys)
             {
@@ -55,44 +55,45 @@ namespace MessagePack.CodeGenerator
             };
         }
 
-        private Dictionary<Type, ModelTypeConfiguration> ReadAndUpdateConfiguration(TypeRegistration typeRegistration)
+        private void ReadAndUpdateConfiguration(TypeRegistration typeRegistration)
         {
             var config = ReadConfiguration();
 
             foreach (var type in typeRegistration.Types)
             {
-                ModelTypeConfiguration typeConfiguration;
-                if (config.ContainsKey(type.FullName))
+                ModelTypeConfiguration modelTypeConfiguration;
+                if (config.ModelConfigurations.ContainsKey(type.FullName))
                 {
-                    typeConfiguration = config[type.FullName];
+                    modelTypeConfiguration = config.ModelConfigurations[type.FullName];
                 }
                 else
                 {
-                    typeConfiguration = new ModelTypeConfiguration();
-                    config[type.FullName] = typeConfiguration;
+                    modelTypeConfiguration = new ModelTypeConfiguration();
+                    config.ModelConfigurations[type.FullName] = modelTypeConfiguration;
+                    modelTypeConfiguration.TypeId = config.GetNextTypeId();
                 }
 
-                UpdateTypeConfiguration(type, typeConfiguration);
-                typeConfiguration.Type = type;
+                UpdateTypeConfiguration(type, modelTypeConfiguration);
+                modelTypeConfiguration.Type = type;
             }
 
             WriteConfiguration(config);
 
-            return BuildRegisteredTypesLookup(config);
+            _registeredTypeConfigs = BuildRegisteredTypesLookup(config);
         }
 
-        private Dictionary<string, ModelTypeConfiguration> ReadConfiguration()
+        private ConfigurationRoot ReadConfiguration()
         {
             if (!File.Exists(_configFilePath))
             {
-                return new Dictionary<string, ModelTypeConfiguration>();
+                return new ConfigurationRoot();
             }
 
             var configString = File.ReadAllText(_configFilePath);
-            return JsonConvert.DeserializeObject<Dictionary<string, ModelTypeConfiguration>>(configString);
+            return JsonConvert.DeserializeObject<ConfigurationRoot>(configString);
         }
 
-        private void WriteConfiguration(Dictionary<string, ModelTypeConfiguration> configuration)
+        private void WriteConfiguration(ConfigurationRoot configuration)
         {
             var configString = JsonConvert.SerializeObject(configuration, Formatting.Indented);
             File.WriteAllText(_configFilePath, configString);
@@ -183,11 +184,11 @@ namespace MessagePack.CodeGenerator
         }
 
         private Dictionary<Type, ModelTypeConfiguration> BuildRegisteredTypesLookup(
-            Dictionary<string, ModelTypeConfiguration> config)
+            ConfigurationRoot config)
         {
             Dictionary<Type, ModelTypeConfiguration> dictionary = new Dictionary<Type, ModelTypeConfiguration>();
 
-            foreach (var modelConfiguration in config.Values)
+            foreach (var modelConfiguration in config.ModelConfigurations.Values)
             {
                 dictionary[modelConfiguration.Type] = modelConfiguration;
             }
@@ -241,6 +242,7 @@ namespace MessagePack.CodeGenerator
                 IsIntKey = true,
                 NeedsCastOnAfter = false,
                 NeedsCastOnBefore = false,
+                TypeId = typeConfiguration.TypeId,
                 Members = typeConfiguration.Members.Select(this.CollectMemberSerializationInfo).ToArray()
             };
 

@@ -21,6 +21,12 @@ namespace ConfigurationTest
                 {
                     new Pet { Name = "Jack", Power = 11f },
                     new Pet { Name = "Tima", Power = 7.9f },
+                    new SuperPet
+                    {
+                        Name = "Miu",
+                        Power = 99999f,
+                        Kind = 1
+                    }
                 },
                 Numbers = new [] { 3, 9, 17, 32}
             };
@@ -32,6 +38,11 @@ namespace ConfigurationTest
 
             var deserializedPerson = MessagePackSerializer.Deserialize<Person>(bytes);
             Console.WriteLine(deserializedPerson);
+
+            foreach (var pet in deserializedPerson.Pets)
+            {
+                Console.WriteLine(pet);
+            }
         }
 
         static void RegisterResolvers()

@@ -8,7 +8,8 @@ namespace ConfigurationTest
         {
             Register(
                 typeof(Person),
-                typeof(Pet)
+                typeof(Pet),
+                typeof(SuperPet)
             );
         }
     }

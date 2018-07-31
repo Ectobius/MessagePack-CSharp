@@ -11,20 +11,32 @@
 namespace <#= Namespace #>
 {
     using System;
+    using System.Collections.Generic;
     using MessagePack;
+    using MessagePack.Formatters;
 
-    public class <#= ResolverName #> : global::MessagePack.IFormatterResolver
+    public class <#= ResolverName #> : global::MessagePack.IFormatterResolver, global::MessagePack.IUntypedFormatterResolver
     {
-        public static readonly global::MessagePack.IFormatterResolver Instance = new <#= ResolverName #>();
+        public static readonly global::MessagePack.IFormatterResolver Instance = new <#= ResolverName #>();        
 
         <#= ResolverName #>()
         {
 
         }
 
+        public static void SetModelFactory(global::MessagePack.ModelCreation.IModelFactory modelFactory)
+        {
+            <#= ResolverName #>GetFormatterHelper.ModelFactory = modelFactory;
+        }
+
         public global::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
         {
             return FormatterCache<T>.formatter;
+        }
+
+        public IMessagePackUntypedFormatter GetFormatter(Type type)
+        {
+            return (IMessagePackUntypedFormatter) GeneratedResolverGetFormatterHelper.GetFormatter(type);
         }
 
         static class FormatterCache<T>
@@ -46,6 +58,9 @@ namespace <#= Namespace #>
     {
         static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
 
+        internal static global::MessagePack.ModelCreation.IModelFactory ModelFactory = new MessagePack.ModelCreation.DefaultModelFactory();
+        static readonly Dictionary<Type, global::MessagePack.Formatters.IMessagePackFormatter> Cache;
+
         static <#= ResolverName #>GetFormatterHelper()
         {
             lookup = new global::System.Collections.Generic.Dictionary<Type, int>(<#= registerInfos.Length #>)
@@ -54,20 +69,39 @@ namespace <#= Namespace #>
                 {typeof(<#= x.FullName #>), <#= i #> },
 <# } #>
             };
+
+            Cache = new Dictionary<Type, global::MessagePack.Formatters.IMessagePackFormatter>();
         }
 
         internal static object GetFormatter(Type t)
         {
             int key;
             if (!lookup.TryGetValue(t, out key)) return null;
+            
+            if (Cache.TryGetValue(t, out var cachedFormatter))
+            {
+                return cachedFormatter;
+            }
 
+            object formatter = null;
             switch (key)
             {
 <# for(var i = 0; i < registerInfos.Length; i++) { var x = registerInfos[i]; #>
-                case <#= i #>: return new <#= x.FormatterName.StartsWith("global::") ? x.FormatterName: (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + x.FormatterName#>();
+    <#  if (x.InjectFactory) { #>
+                case <#= i #>:
+                    formatter = new <#= x.FormatterName.StartsWith("global::") ? x.FormatterName: (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + x.FormatterName#>(ModelFactory);
+                    break;
+    <#        } else { #>
+                case <#= i #>:
+                    formatter = new <#= x.FormatterName.StartsWith("global::") ? x.FormatterName: (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + x.FormatterName#>();
+                    break;
+    <#        } #>
 <# } #>
                 default: return null;
             }
+
+            Cache[t] = (IMessagePackFormatter) formatter;
+            return formatter;
         }
     }
 }

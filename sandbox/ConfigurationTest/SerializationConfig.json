@@ -1,47 +1,73 @@
 {
-  "ConfigurationTest.Person": {
-    "NextValidKey": 5,
-    "Members": [
-      {
-        "Name": "Name",
-        "TypeFullName": "System.String",
-        "Key": 0
-      },
-      {
-        "Name": "Age",
-        "TypeFullName": "System.Int32",
-        "Key": 1
-      },
-      {
-        "Name": "Pets",
-        "TypeFullName": "System.Collections.Generic.List`1[[ConfigurationTest.Pet, ConfigurationTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "Key": 2
-      },
-      {
-        "Name": "Numbers",
-        "TypeFullName": "System.Int32[]",
-        "Key": 3
-      },
-      {
-        "Name": "Height",
-        "TypeFullName": "System.Single",
-        "Key": 4
-      }
-    ]
+  "ModelConfigurations": {
+    "ConfigurationTest.Person": {
+      "NextValidKey": 6,
+      "Members": [
+        {
+          "Name": "Name",
+          "TypeFullName": "System.String",
+          "Key": 0
+        },
+        {
+          "Name": "Age",
+          "TypeFullName": "System.Int32",
+          "Key": 1
+        },
+        {
+          "Name": "Height",
+          "TypeFullName": "System.Single",
+          "Key": 2
+        },
+        {
+          "Name": "Numbers",
+          "TypeFullName": "System.Int32[]",
+          "Key": 4
+        },
+        {
+          "Name": "Pets",
+          "TypeFullName": "System.Collections.Generic.List`1[[ConfigurationTest.Pet, ConfigurationTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+          "Key": 5
+        }
+      ],
+      "TypeId": 64
+    },
+    "ConfigurationTest.Pet": {
+      "NextValidKey": 2,
+      "Members": [
+        {
+          "Name": "Name",
+          "TypeFullName": "System.String",
+          "Key": 0
+        },
+        {
+          "Name": "Power",
+          "TypeFullName": "System.Single",
+          "Key": 1
+        }
+      ],
+      "TypeId": 65
+    },
+    "ConfigurationTest.SuperPet": {
+      "NextValidKey": 3,
+      "Members": [
+        {
+          "Name": "Kind",
+          "TypeFullName": "System.Int32",
+          "Key": 0
+        },
+        {
+          "Name": "Name",
+          "TypeFullName": "System.String",
+          "Key": 1
+        },
+        {
+          "Name": "Power",
+          "TypeFullName": "System.Single",
+          "Key": 2
+        }
+      ],
+      "TypeId": 66
+    }
   },
-  "ConfigurationTest.Pet": {
-    "NextValidKey": 2,
-    "Members": [
-      {
-        "Name": "Name",
-        "TypeFullName": "System.String",
-        "Key": 0
-      },
-      {
-        "Name": "Power",
-        "TypeFullName": "System.Single",
-        "Key": 1
-      }
-    ]
-  }
+  "NextValidTypeId": 67
 }

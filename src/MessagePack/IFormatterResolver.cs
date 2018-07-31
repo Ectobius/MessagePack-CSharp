@@ -10,6 +10,11 @@ namespace MessagePack
         IMessagePackFormatter<T> GetFormatter<T>();
     }
 
+    public interface IUntypedFormatterResolver
+    {
+        IMessagePackUntypedFormatter GetFormatter(Type type);
+    }
+
     public static class FormatterResolverExtensions
     {
         public static IMessagePackFormatter<T> GetFormatterWithVerify<T>(this IFormatterResolver resolver)

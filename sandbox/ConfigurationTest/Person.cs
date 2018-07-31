@@ -7,7 +7,6 @@ namespace ConfigurationTest
         public string Name { get; set; }
         public int Age { get; set; }
         public float Height { get; set; }
-        
         public List<Pet> Pets { get; set; }
         public int[] Numbers { get; set; }
 

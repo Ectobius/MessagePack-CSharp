@@ -190,6 +190,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CodeAnalysis\CollectorCore.cs" />
+    <Compile Include="CodeAnalysis\Configuration\ConfigurationRoot.cs" />
     <Compile Include="CodeAnalysis\Configuration\ModelTypeConfiguration.cs" />
     <Compile Include="CodeAnalysis\Configuration\MemberConfiguration.cs" />
     <Compile Include="CodeAnalysis\Definitions.cs" />

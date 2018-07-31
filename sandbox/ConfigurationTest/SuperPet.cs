@@ -6,14 +6,13 @@ using System.Threading.Tasks;
 
 namespace ConfigurationTest
 {
-    public class Pet
+    public class SuperPet : Pet
     {
-        public string Name { get; set; }
-        public float Power { get; set; }
+        public int Kind { get; set; }
 
         public override string ToString()
         {
-            return $"{nameof(Pet)}: {Name}, {Power}";
+            return $"{nameof(SuperPet)}: {Name}, {Power}, {Kind}";
         }
     }
 }

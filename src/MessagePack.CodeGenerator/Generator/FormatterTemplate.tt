@@ -11,18 +11,36 @@
 namespace <#= Namespace #>
 {
     using System;
+    using System.Collections.Generic;
     using MessagePack;
+    using MessagePack.Formatters;
+
+    internal class TypeRegistry
+    {
+        public static Dictionary<int, Type> Types { get; } = new Dictionary<int, Type>
+        {
+<# foreach(var objInfo in objectSerializationInfos) { #>
+            { <#= objInfo.TypeId #>, typeof(<#= objInfo.FullName #>) },
+<# } #>
+        };
+    }
 
 <# foreach(var objInfo in objectSerializationInfos) { #>
+    <# int numberOfFields = objInfo.MaxKey + 2; #>
 
-    public sealed class <#= objInfo.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
+    public sealed class <#= objInfo.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>, IMessagePackUntypedFormatter
     {
+        private const int TypeId = <#= objInfo.TypeId #>;
+
+        private global::MessagePack.ModelCreation.IModelFactory _modelFactory;
+
 <# if( objInfo.IsStringKey) { #>
 
         readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
         readonly byte[][] ____stringByteKeys;
+        
 
-        public <#= objInfo.Name #>Formatter()
+        public <#= objInfo.Name #>Formatter(global::MessagePack.ModelCreation.IModelFactory modelFactory)
         {
             this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
             {
@@ -37,9 +55,16 @@ namespace <#= Namespace #>
                 global::MessagePack.MessagePackBinary.GetEncodedStringBytes("<#= x.StringKey #>"),
 <# } #>                
             };
+
+            this._modelFactory = modelFactory;
         }
 
-<# } #>
+<#  } else { #>
+        public <#= objInfo.Name #>Formatter(global::MessagePack.ModelCreation.IModelFactory modelFactory)
+        {
+            this._modelFactory = modelFactory;
+        }
+<#  } #>
 
         public int Serialize(ref byte[] bytes, int offset, <#= objInfo.FullName #> value, global::MessagePack.IFormatterResolver formatterResolver)
         {
@@ -48,6 +73,15 @@ namespace <#= Namespace #>
             {
                 return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             }
+
+            if (value.GetType() != typeof(<#= objInfo.FullName #>))
+            {
+                if (formatterResolver is IUntypedFormatterResolver untypedFormatterResolver)
+                {
+                    var derivedTypeFormatter = untypedFormatterResolver.GetFormatter(value.GetType());
+                    return derivedTypeFormatter.Serialize(ref bytes, offset, value, formatterResolver);
+                }
+            }
 <# } #>            
 <#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
             ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
@@ -55,17 +89,18 @@ namespace <#= Namespace #>
             value.OnBeforeSerialize();
 <# } #>
             var startOffset = offset;
-<# if( objInfo.IsIntKey) { if( (objInfo.MaxKey + 1) <= 15) { #>
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, <#= objInfo.MaxKey + 1 #>);
+<# if( objInfo.IsIntKey) { if( (numberOfFields) <= 15) { #>
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, <#= numberOfFields #>);
 <# } else { #>
-            offset += global::MessagePack.MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= objInfo.MaxKey + 1 #>);
+            offset += global::MessagePack.MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= numberOfFields #>);
 <# } } else if( objInfo.WriteCount <= 15) { #>
             offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, <#= objInfo.WriteCount #>);
 <# } else { #>
             offset += global::MessagePack.MessagePackBinary.WriteMapHeader(ref bytes, offset, <#= objInfo.WriteCount #>);
 <# } #>
 <# if(objInfo.IsIntKey) { #>
-<# for(var i =0; i<= objInfo.MaxKey; i++) { var member = objInfo.GetMember(i); #>
+            offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, TypeId);
+<# for(var i = 0; i <= objInfo.MaxKey; i++) { var member = objInfo.GetMember(i); #>
 <# if( member == null) { #>
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
 <# } else { #>
@@ -98,11 +133,29 @@ namespace <#= Namespace #>
 <# } #>
             offset += readSize;
 
+            var writtedTypeId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
+
+            if (writtedTypeId != TypeId)
+            {
+                var actualType = TypeRegistry.Types[writtedTypeId];
+                if (!(formatterResolver is IUntypedFormatterResolver))
+                {
+                    throw new Exception("In order to deserialize derived types resolver should implement IUntypedFormatterResolver");
+                }
+
+                var untypedFormatterResolver = formatterResolver as IUntypedFormatterResolver;
+                var formatter = untypedFormatterResolver.GetFormatter(actualType);
+
+                offset = startOffset;
+                return (<#= objInfo.FullName #>) formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+            }
+
 <# foreach(var x in objInfo.Members) { #>
             var __<#= x.Name #>__ = default(<#= x.Type #>);
 <# } #>
 
-            for (int i = 0; i < length; i++)
+            for (int i = 0; i < length - 1; i++)
             {
 <# if(objInfo.IsStringKey) { #>
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
@@ -136,7 +189,7 @@ namespace <#= Namespace #>
 
             readSize = offset - startOffset;
 
-            var ____result = new <#= objInfo.GetConstructorString()  #>;
+            var ____result = _modelFactory.CreateModel<<#= objInfo.FullName #>>(); //new <#= objInfo.GetConstructorString()  #>;
 <# foreach(var x in objInfo.Members.Where(x => x.IsWritable)) { #>
             ____result.<#= x.Name #> = __<#= x.Name #>__;
 <# } #>
@@ -146,6 +199,16 @@ namespace <#= Namespace #>
             ____result.OnAfterDeserialize();
 <# } #>
             return ____result;
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
+        {
+            return Serialize(ref bytes, offset, (<#= objInfo.FullName #>) value, formatterResolver);
+        }
+
+        object IMessagePackFormatter<object>.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize);
         }
     }
 

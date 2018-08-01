@@ -17,7 +17,8 @@ namespace MessagePack.Tests
 
             byte[] buffer = null;
             var formatter = resolver.GetFormatter<T>();
-            var dataSize = formatter.Serialize(ref buffer, 0, data, resolver);
+            var context = new MessagePack.Formatters.SerializationContext();
+            var dataSize = formatter.Serialize(ref buffer, 0, data, resolver, context);
 
             var headerLength = MessagePackBinary.GetExtensionFormatHeaderLength(dataSize);
 
@@ -38,8 +39,9 @@ namespace MessagePack.Tests
                 // memo, read fully
                 var buffer = new byte[1024];
                 stream.Read(buffer, 0, (int)header.Length);
+                var context = new MessagePack.Formatters.DeserializationContext();
 
-                return resolver.GetFormatter<T>().Deserialize(buffer, 0, resolver, out var _);
+                return resolver.GetFormatter<T>().Deserialize(buffer, 0, resolver, out var _, context);
             }
             else
             {

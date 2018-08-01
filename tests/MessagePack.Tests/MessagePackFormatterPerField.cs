@@ -43,12 +43,12 @@ namespace MessagePack.Tests
 
         public class Int_x10Formatter : IMessagePackFormatter<int>
         {
-            public int Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+            public int Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
             {
                 return MessagePackBinary.ReadInt32(bytes, offset, out readSize) * 10;
             }
 
-            public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver)
+            public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver, SerializationContext context)
             {
                 return MessagePackBinary.WriteInt32(ref bytes, offset, value * 10);
             }
@@ -56,13 +56,13 @@ namespace MessagePack.Tests
 
         public class String_x2Formatter : IMessagePackFormatter<string>
         {
-            public string Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+            public string Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
             {
                 var s = MessagePackBinary.ReadString(bytes, offset, out readSize);
                 return s + s;
             }
 
-            public int Serialize(ref byte[] bytes, int offset, string value, IFormatterResolver formatterResolver)
+            public int Serialize(ref byte[] bytes, int offset, string value, IFormatterResolver formatterResolver, SerializationContext context)
             {
                 return MessagePackBinary.WriteString(ref bytes, offset, value + value);
             }

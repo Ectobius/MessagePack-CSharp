@@ -1,6 +1,7 @@
 ﻿using MessagePack.Internal;
 using System;
 using System.IO;
+using MessagePack.Formatters;
 using MessagePack.LZ4;
 
 namespace MessagePack
@@ -296,6 +297,8 @@ namespace MessagePack
             if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
+            var context = new DeserializationContext();
+
             int readSize;
             if (MessagePackBinary.GetMessagePackType(bytes.Array, bytes.Offset) == MessagePackType.Extension)
             {
@@ -317,11 +320,11 @@ namespace MessagePack
                     var len = bytes.Count + bytes.Offset - offset;
                     LZ4Codec.Decode(bytes.Array, offset, len, buffer, 0, length);
 
-                    return formatter.Deserialize(buffer, 0, resolver, out readSize);
+                    return formatter.Deserialize(buffer, 0, resolver, out readSize, context);
                 }
             }
 
-            return formatter.Deserialize(bytes.Array, bytes.Offset, resolver, out readSize);
+            return formatter.Deserialize(bytes.Array, bytes.Offset, resolver, out readSize, context);
         }
 
         static int FillFromStream(Stream input, ref byte[] buffer)

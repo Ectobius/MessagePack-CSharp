@@ -17,6 +17,7 @@ using System.Text;
 using System.IO.Compression;
 using System.Collections.Concurrent;
 using System.Reflection;
+using SerializationContext = MessagePack.Formatters.SerializationContext;
 
 namespace Sandbox
 {
@@ -243,14 +244,14 @@ namespace Sandbox
         // serialize/deserialize internal field.
         class CustomObjectFormatter : IMessagePackFormatter<CustomObject>
         {
-            public int Serialize(ref byte[] bytes, int offset, CustomObject value, IFormatterResolver formatterResolver)
+            public int Serialize(ref byte[] bytes, int offset, CustomObject value, IFormatterResolver formatterResolver, SerializationContext context)
             {
-                return formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.internalId, formatterResolver);
+                return formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.internalId, formatterResolver, context);
             }
 
-            public CustomObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+            public CustomObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
             {
-                var id = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                var id = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                 return new CustomObject { internalId = id };
             }
         }
@@ -764,7 +765,7 @@ namespace Sandbox
             {1, 1 },
         };
 
-        public int Serialize(ref byte[] bytes, int offset, IHogeMoge value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, IHogeMoge value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             var startOffset = offset;
 
@@ -779,10 +780,10 @@ namespace Sandbox
                 switch (key.Value)
                 {
                     case 0:
-                        offset += formatterResolver.GetFormatterWithVerify<HogeMoge1>().Serialize(ref bytes, offset, (HogeMoge1)value, formatterResolver);
+                        offset += formatterResolver.GetFormatterWithVerify<HogeMoge1>().Serialize(ref bytes, offset, (HogeMoge1)value, formatterResolver, context);
                         break;
                     case 1:
-                        offset += formatterResolver.GetFormatterWithVerify<HogeMoge2>().Serialize(ref bytes, offset, (HogeMoge2)value, formatterResolver);
+                        offset += formatterResolver.GetFormatterWithVerify<HogeMoge2>().Serialize(ref bytes, offset, (HogeMoge2)value, formatterResolver, context);
                         break;
                     default:
                         break;
@@ -794,7 +795,7 @@ namespace Sandbox
             return MessagePackBinary.WriteNil(ref bytes, offset);
         }
 
-        public IHogeMoge Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public IHogeMoge Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             // TODO:array header...
 
@@ -806,13 +807,13 @@ namespace Sandbox
             {
                 case 0:
                     {
-                        var result = formatterResolver.GetFormatterWithVerify<HogeMoge1>().Deserialize(bytes, offset + keySize, formatterResolver, out valueSize);
+                        var result = formatterResolver.GetFormatterWithVerify<HogeMoge1>().Deserialize(bytes, offset + keySize, formatterResolver, out valueSize, context);
                         readSize = keySize + valueSize;
                         return (IHogeMoge)result;
                     }
                 case 1:
                     {
-                        var result = formatterResolver.GetFormatterWithVerify<HogeMoge2>().Deserialize(bytes, offset + keySize, formatterResolver, out valueSize);
+                        var result = formatterResolver.GetFormatterWithVerify<HogeMoge2>().Deserialize(bytes, offset + keySize, formatterResolver, out valueSize, context);
                         readSize = keySize + valueSize;
                         return (IHogeMoge)result;
                     }

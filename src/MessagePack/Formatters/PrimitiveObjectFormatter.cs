@@ -48,7 +48,7 @@ namespace MessagePack.Formatters
 
 #endif
 
-        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -135,8 +135,8 @@ namespace MessagePack.Formatters
                     offset += MessagePackBinary.WriteMapHeader(ref bytes, offset, d.Count);
                     foreach (System.Collections.DictionaryEntry item in d)
                     {
-                        offset += Serialize(ref bytes, offset, item.Key, formatterResolver);
-                        offset += Serialize(ref bytes, offset, item.Value, formatterResolver);
+                        offset += Serialize(ref bytes, offset, item.Key, formatterResolver, context);
+                        offset += Serialize(ref bytes, offset, item.Value, formatterResolver, context);
                     }
                     return offset - startOffset;
                 }
@@ -147,7 +147,7 @@ namespace MessagePack.Formatters
                     offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, c.Count);
                     foreach (var item in c)
                     {
-                        offset += Serialize(ref bytes, offset, item, formatterResolver);
+                        offset += Serialize(ref bytes, offset, item, formatterResolver, context);
                     }
                     return offset - startOffset;
                 }
@@ -156,7 +156,7 @@ namespace MessagePack.Formatters
             throw new InvalidOperationException("Not supported primitive object resolver. type:" + t.Name);
         }
 
-        public object Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public object Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             var type = MessagePackBinary.GetMessagePackType(bytes, offset);
             switch (type)
@@ -206,7 +206,7 @@ namespace MessagePack.Formatters
                         var array = new object[length];
                         for (int i = 0; i < length; i++)
                         {
-                            array[i] = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                            array[i] = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
                             offset += readSize;
                         }
 
@@ -223,10 +223,10 @@ namespace MessagePack.Formatters
                         var hash = new Dictionary<object, object>(length);
                         for (int i = 0; i < length; i++)
                         {
-                            var key = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                            var key = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
                             offset += readSize;
 
-                            var value = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                            var value = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
                             offset += readSize;
 
                             hash.Add(key, value);

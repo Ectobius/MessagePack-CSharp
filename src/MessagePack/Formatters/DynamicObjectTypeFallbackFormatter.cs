@@ -11,7 +11,7 @@ namespace MessagePack.Formatters
 {
     public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object>
     {
-        delegate int SerializeMethod(object dynamicFormatter, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
+        delegate int SerializeMethod(object dynamicFormatter, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context);
 
         readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
 
@@ -22,7 +22,7 @@ namespace MessagePack.Formatters
             this.innerResolvers = innerResolvers;
         }
 
-        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -64,6 +64,7 @@ namespace MessagePack.Formatters
                             var param2 = Expression.Parameter(typeof(int), "offset");
                             var param3 = Expression.Parameter(typeof(object), "value");
                             var param4 = Expression.Parameter(typeof(IFormatterResolver), "formatterResolver");
+                            var param5 = Expression.Parameter(typeof(SerializationContext), "context");
 
                             var serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(byte[]).MakeByRefType(), typeof(int), t, typeof(IFormatterResolver) });
 
@@ -73,9 +74,10 @@ namespace MessagePack.Formatters
                                 param1,
                                 param2,
                                 ti.IsValueType ? Expression.Unbox(param3, t) : Expression.Convert(param3, t),
-                                param4);
+                                param4,
+                                param5);
 
-                            var lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3, param4).Compile();
+                            var lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3, param4, param5).Compile();
 
                             formatterAndDelegate = new KeyValuePair<object, SerializeMethod>(formatter, lambda);
                         }
@@ -85,12 +87,12 @@ namespace MessagePack.Formatters
                 }
             }
 
-            return formatterAndDelegate.Value(formatterAndDelegate.Key, ref bytes, offset, value, formatterResolver);
+            return formatterAndDelegate.Value(formatterAndDelegate.Key, ref bytes, offset, value, formatterResolver, context);
         }
 
-        public object Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public object Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
-            return PrimitiveObjectFormatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
+            return PrimitiveObjectFormatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize, context);
         }
     }
 }

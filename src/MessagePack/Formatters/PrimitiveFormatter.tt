@@ -35,12 +35,12 @@ namespace MessagePack.Formatters
         {
         }
 
-        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #> value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             return MessagePackBinary.Write<#= t.Name #>(ref bytes, offset, value);
         }
 
-        public <#= t.Name #> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public <#= t.Name #> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             return MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
         }
@@ -54,7 +54,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>? value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>? value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -66,7 +66,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public <#= t.Name #>? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public <#= t.Name #>? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -90,7 +90,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>[] value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>[] value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -109,7 +109,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public <#= t.Name #>[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public <#= t.Name #>[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {

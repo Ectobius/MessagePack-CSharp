@@ -186,7 +186,8 @@ namespace MessagePack.Tests
                 const int CheckOffset = 10;
 
                 byte[] bytes = null;
-                var len = MessagePack.Resolvers.StandardResolver.Instance.GetFormatter<T>().Serialize(ref bytes, CheckOffset, data, MessagePack.Resolvers.StandardResolver.Instance);
+                var context = new MessagePack.Formatters.SerializationContext();
+                var len = MessagePack.Resolvers.StandardResolver.Instance.GetFormatter<T>().Serialize(ref bytes, CheckOffset, data, MessagePack.Resolvers.StandardResolver.Instance, context);
                 MessagePackBinary.FastResize(ref bytes, CheckOffset + len);
 
 
@@ -201,7 +202,8 @@ namespace MessagePack.Tests
                 const int CheckOffset = 10;
 
                 byte[] bytes = null;
-                var len = MessagePack.Resolvers.StandardResolver.Instance.GetFormatter<T>().Serialize(ref bytes, CheckOffset, data, MessagePack.Resolvers.StandardResolver.Instance);
+                var context = new MessagePack.Formatters.SerializationContext();
+                var len = MessagePack.Resolvers.StandardResolver.Instance.GetFormatter<T>().Serialize(ref bytes, CheckOffset, data, MessagePack.Resolvers.StandardResolver.Instance, context);
                 MessagePackBinary.FastResize(ref bytes, CheckOffset + len);
 
 

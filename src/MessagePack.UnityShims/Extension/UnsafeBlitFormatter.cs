@@ -51,7 +51,7 @@ namespace MessagePack.Unity.Extension
         protected abstract void CopySerializeUnsafe(ref T[] src, ref byte[] dest, int destOffset, int byteLength);
         protected abstract void CopyDeserializeUnsafe(ref byte[] src, int srcOffset, ref T[] dest, int byteLength);
 
-        public unsafe int Serialize(ref byte[] bytes, int offset, T[] value, IFormatterResolver formatterResolver)
+        public unsafe int Serialize(ref byte[] bytes, int offset, T[] value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null) return MessagePackBinary.WriteNil(ref bytes, offset);
 
@@ -70,7 +70,7 @@ namespace MessagePack.Unity.Extension
             return offset - startOffset;
         }
 
-        public unsafe T[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public unsafe T[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {

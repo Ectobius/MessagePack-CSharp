@@ -1,6 +1,7 @@
 ﻿using MessagePack.Internal;
 using System;
 using System.IO;
+using MessagePack.Formatters;
 
 namespace MessagePack
 {
@@ -64,8 +65,9 @@ namespace MessagePack
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
+            var context = new SerializationContext();
 
-            var len = formatter.Serialize(ref buffer, 0, obj, resolver);
+            var len = formatter.Serialize(ref buffer, 0, obj, resolver, context);
 
             // do not return MemoryPool.Buffer.
             return MessagePackBinary.FastCloneWithResize(buffer, len);
@@ -88,8 +90,9 @@ namespace MessagePack
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
+            var context = new SerializationContext();
 
-            var len = formatter.Serialize(ref buffer, 0, obj, resolver);
+            var len = formatter.Serialize(ref buffer, 0, obj, resolver, context);
 
             // return raw memory pool, unsafe!
             return new ArraySegment<byte>(buffer, 0, len);
@@ -112,8 +115,9 @@ namespace MessagePack
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
+            var context = new SerializationContext();
 
-            var len = formatter.Serialize(ref buffer, 0, obj, resolver);
+            var len = formatter.Serialize(ref buffer, 0, obj, resolver, context);
 
             // do not need resize.
             stream.Write(buffer, 0, len);
@@ -124,7 +128,8 @@ namespace MessagePack
         /// </summary>
         public static int Serialize<T>(ref byte[] bytes, int offset, T value, IFormatterResolver resolver)
         {
-            return resolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value, resolver);
+            var context = new SerializationContext();
+            return resolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value, resolver, context);
         }
 
 #if NETSTANDARD
@@ -146,10 +151,11 @@ namespace MessagePack
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var rentBuffer = BufferPool.Default.Rent();
+            var context = new SerializationContext();
             try
             {
                 var buffer = rentBuffer;
-                var len = formatter.Serialize(ref buffer, 0, obj, resolver);
+                var len = formatter.Serialize(ref buffer, 0, obj, resolver, context);
 
                 // do not need resize.
                 await stream.WriteAsync(buffer, 0, len).ConfigureAwait(false);
@@ -172,8 +178,10 @@ namespace MessagePack
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
+            var context = new DeserializationContext();
+
             int readSize;
-            return formatter.Deserialize(bytes, 0, resolver, out readSize);
+            return formatter.Deserialize(bytes, 0, resolver, out readSize, context);
         }
 
         public static T Deserialize<T>(ArraySegment<byte> bytes)
@@ -186,8 +194,10 @@ namespace MessagePack
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
+            var context = new DeserializationContext();
+
             int readSize;
-            return formatter.Deserialize(bytes.Array, bytes.Offset, resolver, out readSize);
+            return formatter.Deserialize(bytes.Array, bytes.Offset, resolver, out readSize, context);
         }
 
         public static T Deserialize<T>(Stream stream)
@@ -210,6 +220,8 @@ namespace MessagePack
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
+            var context = new DeserializationContext();
+
             if (!readStrict)
             {
 #if NETSTANDARD && !NET45
@@ -222,7 +234,7 @@ namespace MessagePack
                     if (ms.TryGetBuffer(out buffer))
                     {
                         int readSize;
-                        return formatter.Deserialize(buffer.Array, buffer.Offset, resolver, out readSize);
+                        return formatter.Deserialize(buffer.Array, buffer.Offset, resolver, out readSize, context);
                     }
                 }
 #endif
@@ -234,7 +246,7 @@ namespace MessagePack
                     FillFromStream(stream, ref buffer);
 
                     int readSize;
-                    return formatter.Deserialize(buffer, 0, resolver, out readSize);
+                    return formatter.Deserialize(buffer, 0, resolver, out readSize, context);
                 }
             }
             else
@@ -242,16 +254,16 @@ namespace MessagePack
                 int _;
                 var bytes = MessagePackBinary.ReadMessageBlockFromStreamUnsafe(stream, false, out _);
                 int readSize;
-                return formatter.Deserialize(bytes, 0, resolver, out readSize);
+                return formatter.Deserialize(bytes, 0, resolver, out readSize, context);
             }
         }
 
         /// <summary>
         /// Reflect of resolver.GetFormatterWithVerify[T].Deserialize.
         /// </summary>
-        public static T Deserialize<T>(byte[] bytes, int offset, IFormatterResolver resolver, out int readSize)
+        public static T Deserialize<T>(byte[] bytes, int offset, IFormatterResolver resolver, out int readSize, DeserializationContext context)
         {
-            return resolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, resolver, out readSize);
+            return resolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, resolver, out readSize, context);
         }
 
 #if NETSTANDARD

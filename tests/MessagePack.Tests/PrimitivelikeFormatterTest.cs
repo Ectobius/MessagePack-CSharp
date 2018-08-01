@@ -22,12 +22,12 @@ namespace MessagePack.Tests
 
     public class DummyStringFormatter : IMessagePackFormatter<string>
     {
-        public string Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public string Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             throw new NotImplementedException();
         }
 
-        public int Serialize(ref byte[] bytes, int offset, string value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, string value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             throw new NotImplementedException();
         }
@@ -35,12 +35,12 @@ namespace MessagePack.Tests
 
     public class DummyDateTimeFormatter : IMessagePackFormatter<DateTime>
     {
-        public DateTime Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public DateTime Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             throw new NotImplementedException();
         }
 
-        public int Serialize(ref byte[] bytes, int offset, DateTime value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, DateTime value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             throw new NotImplementedException();
         }
@@ -48,12 +48,12 @@ namespace MessagePack.Tests
 
     public class DummyBinaryFormatter : IMessagePackFormatter<byte[]>
     {
-        public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             throw new NotImplementedException();
         }
 
-        public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             throw new NotImplementedException();
         }

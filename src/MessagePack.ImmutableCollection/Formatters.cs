@@ -7,7 +7,7 @@ namespace MessagePack.ImmutableCollection
     // Immutablearray<T>.Enumerator is 'not' IEnumerator<T>, can't use abstraction layer.
     public class ImmutableArrayFormatter<T> : IMessagePackFormatter<ImmutableArray<T>>
     {
-        public int Serialize(ref byte[] bytes, int offset, ImmutableArray<T> value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, ImmutableArray<T> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -22,14 +22,14 @@ namespace MessagePack.ImmutableCollection
 
                 foreach (var item in value)
                 {
-                    offset += formatter.Serialize(ref bytes, offset, item, formatterResolver);
+                    offset += formatter.Serialize(ref bytes, offset, item, formatterResolver, context);
                 }
 
                 return offset - startOffset;
             }
         }
 
-        public ImmutableArray<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public ImmutableArray<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -47,7 +47,7 @@ namespace MessagePack.ImmutableCollection
                 var builder = ImmutableArray.CreateBuilder<T>(len);
                 for (int i = 0; i < len; i++)
                 {
-                    builder.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
+                    builder.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
                     offset += readSize;
                 }
                 readSize = offset - startOffset;

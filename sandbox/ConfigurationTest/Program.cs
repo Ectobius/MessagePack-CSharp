@@ -13,6 +13,8 @@ namespace ConfigurationTest
         {
             RegisterResolvers();
 
+            var tima = new Pet {Name = "Tima", Power = 7.9f};
+
             var person = new Person
             {
                 Name = "Alex",
@@ -20,13 +22,14 @@ namespace ConfigurationTest
                 Pets = new List<Pet>
                 {
                     new Pet { Name = "Jack", Power = 11f },
-                    new Pet { Name = "Tima", Power = 7.9f },
+                    tima,
                     new SuperPet
                     {
                         Name = "Miu",
                         Power = 99999f,
                         Kind = 1
-                    }
+                    },
+                    tima
                 },
                 Numbers = new [] { 3, 9, 17, 32}
             };
@@ -43,6 +46,8 @@ namespace ConfigurationTest
             {
                 Console.WriteLine(pet);
             }
+
+            Console.WriteLine(deserializedPerson.Pets[1] == deserializedPerson.Pets[3]);
         }
 
         static void RegisterResolvers()

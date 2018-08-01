@@ -85,7 +85,7 @@ namespace MessagePack.CodeGenerator.Generator
             this.Write("    ");
             
             #line 29 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
- int numberOfFields = objInfo.MaxKey + 2; 
+ int numberOfFields = objInfo.MaxKey + 3; 
             
             #line default
             #line hidden
@@ -208,7 +208,8 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write(" value, global::MessagePack.IFormatterResolver formatterResolver)\r\n        {\r\n");
+            this.Write(" value, global::MessagePack.IFormatterResolver formatterResolver, SerializationCo" +
+                    "ntext context)\r\n        {\r\n");
             
             #line 71 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if( objInfo.IsClass) { 
@@ -229,7 +230,7 @@ namespace MessagePack.CodeGenerator.Generator
                 if (formatterResolver is IUntypedFormatterResolver untypedFormatterResolver)
                 {
                     var derivedTypeFormatter = untypedFormatterResolver.GetFormatter(value.GetType());
-                    return derivedTypeFormatter.Serialize(ref bytes, offset, value, formatterResolver);
+                    return derivedTypeFormatter.Serialize(ref bytes, offset, value, formatterResolver, context);
                 }
             }
 ");
@@ -261,9 +262,21 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             
             #line default
             #line hidden
-            this.Write("            var startOffset = offset;\r\n");
+            this.Write(@"            var startOffset = offset;
+
+            if (context != null && context.SerializedObjects.ContainsKey(value))
+            {
+                offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+                offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, (int) global::MessagePack.ModelSerialization.ReservedTypes.Reference);
+                offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, context.SerializedObjects[value]);
+                return offset - startOffset;
+            }
+
+            int objectId = context.PutToSerialized(value);
+
+");
             
-            #line 92 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 103 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if( objInfo.IsIntKey) { if( (numberOfFields) <= 15) { 
             
             #line default
@@ -271,14 +284,14 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeader" +
                     "Unsafe(ref bytes, offset, ");
             
-            #line 93 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 104 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(numberOfFields));
             
             #line default
             #line hidden
             this.Write(");\r\n");
             
-            #line 94 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 105 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else { 
             
             #line default
@@ -286,14 +299,14 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            offset += global::MessagePack.MessagePackBinary.WriteArrayHeader(ref " +
                     "bytes, offset, ");
             
-            #line 95 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 106 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(numberOfFields));
             
             #line default
             #line hidden
             this.Write(");\r\n");
             
-            #line 96 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 107 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } } else if( objInfo.WriteCount <= 15) { 
             
             #line default
@@ -301,14 +314,14 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUn" +
                     "safe(ref bytes, offset, ");
             
-            #line 97 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 108 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.WriteCount));
             
             #line default
             #line hidden
             this.Write(");\r\n");
             
-            #line 98 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 109 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else { 
             
             #line default
@@ -316,34 +329,35 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            offset += global::MessagePack.MessagePackBinary.WriteMapHeader(ref by" +
                     "tes, offset, ");
             
-            #line 99 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 110 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.WriteCount));
             
             #line default
             #line hidden
             this.Write(");\r\n");
             
-            #line 100 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 111 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             
-            #line 101 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 112 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if(objInfo.IsIntKey) { 
             
             #line default
             #line hidden
-            this.Write("            offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes," +
-                    " offset, TypeId);\r\n");
+            this.Write("\r\n            offset += global::MessagePack.MessagePackBinary.WriteInt32(ref byte" +
+                    "s, offset, TypeId);\r\n            offset += global::MessagePack.MessagePackBinary" +
+                    ".WriteInt32(ref bytes, offset, objectId);\r\n\r\n");
             
-            #line 103 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 117 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  for(var i = 0; i <= objInfo.MaxKey; i++) { var member = objInfo.GetMember(i); 
             
             #line default
             #line hidden
             
-            #line 104 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 118 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if( member == null) { 
             
             #line default
@@ -351,27 +365,27 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, o" +
                     "ffset);\r\n");
             
-            #line 106 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 120 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else { 
             
             #line default
             #line hidden
             this.Write("            offset += ");
             
-            #line 107 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 121 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetSerializeMethodString()));
             
             #line default
             #line hidden
             this.Write(";\r\n");
             
-            #line 108 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 122 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } } } else { 
             
             #line default
             #line hidden
             
-            #line 109 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 123 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  var index = 0; foreach(var x in objInfo.Members) { 
             
             #line default
@@ -379,44 +393,45 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            offset += global::MessagePack.MessagePackBinary.WriteRaw(ref bytes, o" +
                     "ffset, this.____stringByteKeys[");
             
-            #line 110 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 124 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(index++));
             
             #line default
             #line hidden
             this.Write("]);\r\n            offset += ");
             
-            #line 111 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 125 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.GetSerializeMethodString()));
             
             #line default
             #line hidden
             this.Write(";\r\n");
             
-            #line 112 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 126 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } } 
             
             #line default
             #line hidden
             this.Write("            return offset - startOffset;\r\n        }\r\n\r\n        public ");
             
-            #line 116 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 130 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             
             #line default
             #line hidden
             this.Write(" Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver for" +
-                    "matterResolver, out int readSize)\r\n        {\r\n            if (global::MessagePac" +
-                    "k.MessagePackBinary.IsNil(bytes, offset))\r\n            {\r\n");
+                    "matterResolver, out int readSize, DeserializationContext context)\r\n        {\r\n  " +
+                    "          if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))\r\n     " +
+                    "       {\r\n");
             
-            #line 120 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 134 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if( objInfo.IsClass) { 
             
             #line default
             #line hidden
             this.Write("                readSize = 1;\r\n                return null;\r\n");
             
-            #line 123 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 137 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else { 
             
             #line default
@@ -424,14 +439,14 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("                throw new InvalidOperationException(\"typecode is null, struct not" +
                     " supported\");\r\n");
             
-            #line 125 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 139 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             this.Write("            }\r\n\r\n            var startOffset = offset;\r\n");
             
-            #line 129 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 143 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if(objInfo.IsStringKey) { 
             
             #line default
@@ -439,7 +454,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(byte" +
                     "s, offset, out readSize);\r\n");
             
-            #line 131 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 145 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else { 
             
             #line default
@@ -447,7 +462,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(by" +
                     "tes, offset, out readSize);\r\n");
             
-            #line 133 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 147 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
@@ -456,6 +471,26 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
 
             var writtedTypeId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
             offset += readSize;
+
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.Reference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+                
+                if (context.DeserializedObjects.ContainsKey(referencedObjectId))
+                {
+                    return (");
+            
+            #line 161 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
+            
+            #line default
+            #line hidden
+            this.Write(@") context.DeserializedObjects[referencedObjectId];
+                }
+                return null;
+            }
 
             if (writtedTypeId != TypeId)
             {
@@ -471,43 +506,44 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
                 offset = startOffset;
                 return (");
             
-            #line 151 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 178 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             
             #line default
             #line hidden
-            this.Write(") formatter.Deserialize(bytes, offset, formatterResolver, out readSize);\r\n       " +
-                    "     }\r\n\r\n");
+            this.Write(") formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);" +
+                    "\r\n            }\r\n\r\n            var objectId = MessagePackBinary.ReadInt32(bytes," +
+                    " offset, out readSize);\r\n            offset += readSize;\r\n\r\n");
             
-            #line 154 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 184 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  foreach(var x in objInfo.Members) { 
             
             #line default
             #line hidden
             this.Write("            var __");
             
-            #line 155 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 185 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.Name));
             
             #line default
             #line hidden
             this.Write("__ = default(");
             
-            #line 155 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 185 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.Type));
             
             #line default
             #line hidden
             this.Write(");\r\n");
             
-            #line 156 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 186 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
-            this.Write("\r\n            for (int i = 0; i < length - 1; i++)\r\n            {\r\n");
+            this.Write("\r\n            for (int i = 0; i < length - 2; i++)\r\n            {\r\n");
             
-            #line 160 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 190 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if(objInfo.IsStringKey) { 
             
             #line default
@@ -522,49 +558,49 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
                 }
 ");
             
-            #line 169 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 199 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else { 
             
             #line default
             #line hidden
             this.Write("                var key = i;\r\n");
             
-            #line 171 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 201 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             this.Write("\r\n                switch (key)\r\n                {\r\n");
             
-            #line 175 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 205 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  foreach(var x in objInfo.Members) { 
             
             #line default
             #line hidden
             this.Write("                    case ");
             
-            #line 176 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 206 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.IntKey));
             
             #line default
             #line hidden
             this.Write(":\r\n                        __");
             
-            #line 177 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 207 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.Name));
             
             #line default
             #line hidden
             this.Write("__ = ");
             
-            #line 177 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 207 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.GetDeserializeMethodString()));
             
             #line default
             #line hidden
             this.Write(";\r\n                        break;\r\n");
             
-            #line 179 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 209 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
@@ -573,14 +609,14 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
                     "ack.MessagePackBinary.ReadNextBlock(bytes, offset);\r\n                        bre" +
                     "ak;\r\n                }\r\n");
             
-            #line 184 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 214 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if(objInfo.IsStringKey) { 
             
             #line default
             #line hidden
             this.Write("                \r\n                NEXT_LOOP:\r\n");
             
-            #line 186 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 216 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
@@ -588,48 +624,48 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("                offset += readSize;\r\n            }\r\n\r\n            readSize = offs" +
                     "et - startOffset;\r\n\r\n            var ____result = _modelFactory.CreateModel<");
             
-            #line 192 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 222 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             
             #line default
             #line hidden
             this.Write(">(); //new ");
             
-            #line 192 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 222 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
             
             #line default
             #line hidden
             this.Write(";\r\n");
             
-            #line 193 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 223 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  foreach(var x in objInfo.Members.Where(x => x.IsWritable)) { 
             
             #line default
             #line hidden
             this.Write("            ____result.");
             
-            #line 194 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 224 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.Name));
             
             #line default
             #line hidden
             this.Write(" = __");
             
-            #line 194 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 224 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.Name));
             
             #line default
             #line hidden
             this.Write("__;\r\n");
             
-            #line 195 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 225 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             
-            #line 196 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 226 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
 if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnAfter) { 
             
             #line default
@@ -637,39 +673,45 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnAf
             this.Write("            ((IMessagePackSerializationCallbackReceiver)____result).OnAfterDeseri" +
                     "alize();\r\n");
             
-            #line 198 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 228 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { 
             
             #line default
             #line hidden
             this.Write("            ____result.OnAfterDeserialize();\r\n");
             
-            #line 200 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 230 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
-            this.Write("            return ____result;\r\n        }\r\n\r\n        public int Serialize(ref byt" +
-                    "e[] bytes, int offset, object value, IFormatterResolver formatterResolver)\r\n    " +
-                    "    {\r\n            return Serialize(ref bytes, offset, (");
+            this.Write(@"
+            context.DeserializedObjects[objectId] = ____result;
+
+            return ____result;
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, (");
             
-            #line 206 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 239 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             
             #line default
             #line hidden
-            this.Write(@") value, formatterResolver);
+            this.Write(@") value, formatterResolver, context);
         }
 
-        object IMessagePackFormatter<object>.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        object IMessagePackFormatter<object>.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
-            return Deserialize(bytes, offset, formatterResolver, out readSize);
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
         }
     }
 
 ");
             
-            #line 215 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 248 "C:\programming\work\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default

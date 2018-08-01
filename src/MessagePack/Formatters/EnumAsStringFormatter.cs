@@ -24,7 +24,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             string name;
             if (!valueNameMapping.TryGetValue(value, out name))
@@ -35,7 +35,7 @@ namespace MessagePack.Formatters
             return MessagePackBinary.WriteString(ref bytes, offset, name);
         }
 
-        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             var name = MessagePackBinary.ReadString(bytes, offset, out readSize);
 

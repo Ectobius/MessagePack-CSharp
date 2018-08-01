@@ -23,12 +23,12 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             return MessagePackBinary.WriteBytes(ref bytes, offset, value);
         }
 
-        public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             return MessagePackBinary.ReadBytes(bytes, offset, out readSize);
         }
@@ -43,12 +43,12 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, String value, IFormatterResolver typeResolver)
+        public int Serialize(ref byte[] bytes, int offset, String value, IFormatterResolver typeResolver, SerializationContext context)
         {
             return MessagePackBinary.WriteString(ref bytes, offset, value);
         }
 
-        public String Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
+        public String Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize, DeserializationContext context)
         {
             return MessagePackBinary.ReadString(bytes, offset, out readSize);
         }
@@ -63,7 +63,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, String[] value, IFormatterResolver typeResolver)
+        public int Serialize(ref byte[] bytes, int offset, String[] value, IFormatterResolver typeResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -82,7 +82,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public String[] Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
+        public String[] Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -116,12 +116,12 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, decimal value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, decimal value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             return MessagePackBinary.WriteString(ref bytes, offset, value.ToString(CultureInfo.InvariantCulture));
         }
 
-        public decimal Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public decimal Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             return decimal.Parse(MessagePackBinary.ReadString(bytes, offset, out readSize), CultureInfo.InvariantCulture);
         }
@@ -136,12 +136,12 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, TimeSpan value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, TimeSpan value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             return MessagePackBinary.WriteInt64(ref bytes, offset, value.Ticks);
         }
 
-        public TimeSpan Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public TimeSpan Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             return new TimeSpan(MessagePackBinary.ReadInt64(bytes, offset, out readSize));
         }
@@ -156,7 +156,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, DateTimeOffset value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, DateTimeOffset value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             var startOffset = offset;
             offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, 2);
@@ -165,7 +165,7 @@ namespace MessagePack.Formatters
             return offset - startOffset;
         }
 
-        public DateTimeOffset Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public DateTimeOffset Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             var startOffset = offset;
             var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
@@ -195,7 +195,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, Guid value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, Guid value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             MessagePackBinary.EnsureCapacity(ref bytes, offset, 38);
 
@@ -205,7 +205,7 @@ namespace MessagePack.Formatters
             return 38;
         }
 
-        public Guid Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Guid Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             var segment = MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
             return new GuidBits(segment).Value;
@@ -222,7 +222,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, Uri value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, Uri value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -234,7 +234,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Uri Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Uri Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -257,7 +257,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, Version value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, Version value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -269,7 +269,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Version Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Version Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -285,16 +285,16 @@ namespace MessagePack.Formatters
 
     public sealed class KeyValuePairFormatter<TKey, TValue> : IMessagePackFormatter<KeyValuePair<TKey, TValue>>
     {
-        public int Serialize(ref byte[] bytes, int offset, KeyValuePair<TKey, TValue> value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, KeyValuePair<TKey, TValue> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             var startOffset = offset;
             offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, 2);
-            offset += formatterResolver.GetFormatterWithVerify<TKey>().Serialize(ref bytes, offset, value.Key, formatterResolver);
-            offset += formatterResolver.GetFormatterWithVerify<TValue>().Serialize(ref bytes, offset, value.Value, formatterResolver);
+            offset += formatterResolver.GetFormatterWithVerify<TKey>().Serialize(ref bytes, offset, value.Key, formatterResolver, context);
+            offset += formatterResolver.GetFormatterWithVerify<TValue>().Serialize(ref bytes, offset, value.Value, formatterResolver, context);
             return offset - startOffset;
         }
 
-        public KeyValuePair<TKey, TValue> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public KeyValuePair<TKey, TValue> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             var startOffset = offset;
             var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
@@ -302,10 +302,10 @@ namespace MessagePack.Formatters
 
             if (count != 2) throw new InvalidOperationException("Invalid KeyValuePair format.");
 
-            var key = formatterResolver.GetFormatterWithVerify<TKey>().Deserialize(bytes, offset, formatterResolver, out readSize);
+            var key = formatterResolver.GetFormatterWithVerify<TKey>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
             offset += readSize;
 
-            var value = formatterResolver.GetFormatterWithVerify<TValue>().Deserialize(bytes, offset, formatterResolver, out readSize);
+            var value = formatterResolver.GetFormatterWithVerify<TValue>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
             offset += readSize;
 
             readSize = offset - startOffset;
@@ -322,7 +322,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, StringBuilder value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, StringBuilder value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -334,7 +334,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public StringBuilder Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public StringBuilder Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -357,7 +357,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, BitArray value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, BitArray value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -377,7 +377,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public BitArray Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public BitArray Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -415,12 +415,12 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, System.Numerics.BigInteger value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, System.Numerics.BigInteger value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             return MessagePackBinary.WriteBytes(ref bytes, offset, value.ToByteArray());
         }
 
-        public System.Numerics.BigInteger Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public System.Numerics.BigInteger Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             return new System.Numerics.BigInteger(MessagePackBinary.ReadBytes(bytes, offset, out readSize));
         }
@@ -435,7 +435,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, System.Numerics.Complex value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, System.Numerics.Complex value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             var startOffset = offset;
             offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, 2);
@@ -444,7 +444,7 @@ namespace MessagePack.Formatters
             return offset - startOffset;
         }
 
-        public System.Numerics.Complex Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public System.Numerics.Complex Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             var startOffset = offset;
             var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
@@ -465,7 +465,7 @@ namespace MessagePack.Formatters
 
     public sealed class LazyFormatter<T> : IMessagePackFormatter<Lazy<T>>
     {
-        public int Serialize(ref byte[] bytes, int offset, Lazy<T> value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, Lazy<T> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -473,11 +473,11 @@ namespace MessagePack.Formatters
             }
             else
             {
-                return formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Value, formatterResolver);
+                return formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Value, formatterResolver, context);
             }
         }
 
-        public Lazy<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Lazy<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -487,7 +487,7 @@ namespace MessagePack.Formatters
             else
             {
                 // deserialize immediately(no delay, because capture byte[] causes memory leak)
-                var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                 return new Lazy<T>(() => v);
             }
         }
@@ -503,7 +503,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, Task value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, Task value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -516,7 +516,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Task Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Task Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (!MessagePackBinary.IsNil(bytes, offset))
             {
@@ -532,7 +532,7 @@ namespace MessagePack.Formatters
 
     public sealed class TaskValueFormatter<T> : IMessagePackFormatter<Task<T>>
     {
-        public int Serialize(ref byte[] bytes, int offset, Task<T> value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, Task<T> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -541,11 +541,11 @@ namespace MessagePack.Formatters
             else
             {
                 // value.Result -> wait...!
-                return formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Result, formatterResolver);
+                return formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Result, formatterResolver, context);
             }
         }
 
-        public Task<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Task<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -554,7 +554,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                 return Task.FromResult(v);
             }
         }
@@ -562,14 +562,14 @@ namespace MessagePack.Formatters
 
     public sealed class ValueTaskFormatter<T> : IMessagePackFormatter<ValueTask<T>>
     {
-        public int Serialize(ref byte[] bytes, int offset, ValueTask<T> value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, ValueTask<T> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
-            return formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Result, formatterResolver);
+            return formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Result, formatterResolver, context);
         }
 
-        public ValueTask<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public ValueTask<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
-            var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
+            var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
             return new ValueTask<T>(v);
         }
     }

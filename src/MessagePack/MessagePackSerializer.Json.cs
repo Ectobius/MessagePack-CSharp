@@ -123,7 +123,7 @@ namespace MessagePack
                         }
                         else if (v == ValueType.Decimal)
                         {
-                            offset += DecimalFormatter.Instance.Serialize(ref binary, offset, jr.DecimalValue, null);
+                            offset += DecimalFormatter.Instance.Serialize(ref binary, offset, jr.DecimalValue, null, null);
                         }
                         count++;
                         break;

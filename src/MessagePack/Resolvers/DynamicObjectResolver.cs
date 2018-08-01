@@ -1281,13 +1281,13 @@ typeof(int), typeof(int) });
             this.deserialize = deserialize;
         }
 
-        public int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (serialize == null) throw new InvalidOperationException(this.GetType().Name + " does not support Serialize.");
             return serialize(stringByteKeysField, serializeCustomFormatters, ref bytes, offset, value, formatterResolver);
         }
 
-        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (deserialize == null) throw new InvalidOperationException(this.GetType().Name + " does not support Deserialize.");
             return deserialize(deserializeCustomFormatters, bytes, offset, formatterResolver, out readSize);

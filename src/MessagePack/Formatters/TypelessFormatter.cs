@@ -134,7 +134,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -165,7 +165,7 @@ namespace MessagePack.Formatters
 
             if (typeName == null)
             {
-                return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Serialize(ref bytes, offset, value, formatterResolver);
+                return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Serialize(ref bytes, offset, value, formatterResolver, context);
             }
 
             // don't use GetOrAdd for avoid closure capture.
@@ -190,8 +190,9 @@ namespace MessagePack.Formatters
                         var param2 = Expression.Parameter(typeof(int), "offset");
                         var param3 = Expression.Parameter(typeof(object), "value");
                         var param4 = Expression.Parameter(typeof(IFormatterResolver), "formatterResolver");
+                        var param5 = Expression.Parameter(typeof(SerializationContext), "context");
 
-                        var serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(byte[]).MakeByRefType(), typeof(int), type, typeof(IFormatterResolver) });
+                        var serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(byte[]).MakeByRefType(), typeof(int), type, typeof(IFormatterResolver), typeof(SerializationContext) });
 
                         var body = Expression.Call(
                             Expression.Convert(param0, formatterType),
@@ -199,9 +200,10 @@ namespace MessagePack.Formatters
                             param1,
                             param2,
                             ti.IsValueType ? Expression.Unbox(param3, type) : Expression.Convert(param3, type),
-                            param4);
+                            param4,
+                            param5);
 
-                        var lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3, param4).Compile();
+                        var lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3, param4, param5).Compile();
 
                         formatterAndDelegate = new KeyValuePair<object, SerializeMethod>(formatter, lambda);
                         serializers.TryAdd(type, formatterAndDelegate);
@@ -218,7 +220,7 @@ namespace MessagePack.Formatters
             return offset - startOffset;
         }
 
-        public object Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public object Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -245,7 +247,7 @@ namespace MessagePack.Formatters
             }
 
             // fallback
-            return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Deserialize(bytes, startOffset, formatterResolver, out readSize);
+            return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Deserialize(bytes, startOffset, formatterResolver, out readSize, context);
         }
 
         /// <summary>

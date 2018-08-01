@@ -26,7 +26,7 @@ namespace <#= Namespace #>
     }
 
 <# foreach(var objInfo in objectSerializationInfos) { #>
-    <# int numberOfFields = objInfo.MaxKey + 2; #>
+    <# int numberOfFields = objInfo.MaxKey + 3; #>
 
     public sealed class <#= objInfo.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>, IMessagePackUntypedFormatter
     {
@@ -66,7 +66,7 @@ namespace <#= Namespace #>
         }
 <#  } #>
 
-        public int Serialize(ref byte[] bytes, int offset, <#= objInfo.FullName #> value, global::MessagePack.IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, <#= objInfo.FullName #> value, global::MessagePack.IFormatterResolver formatterResolver, SerializationContext context)
         {
 <# if( objInfo.IsClass) { #>
             if (value == null)
@@ -79,7 +79,7 @@ namespace <#= Namespace #>
                 if (formatterResolver is IUntypedFormatterResolver untypedFormatterResolver)
                 {
                     var derivedTypeFormatter = untypedFormatterResolver.GetFormatter(value.GetType());
-                    return derivedTypeFormatter.Serialize(ref bytes, offset, value, formatterResolver);
+                    return derivedTypeFormatter.Serialize(ref bytes, offset, value, formatterResolver, context);
                 }
             }
 <# } #>            
@@ -89,6 +89,17 @@ namespace <#= Namespace #>
             value.OnBeforeSerialize();
 <# } #>
             var startOffset = offset;
+
+            if (context != null && context.SerializedObjects.ContainsKey(value))
+            {
+                offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+                offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, (int) global::MessagePack.ModelSerialization.ReservedTypes.Reference);
+                offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, context.SerializedObjects[value]);
+                return offset - startOffset;
+            }
+
+            int objectId = context.PutToSerialized(value);
+
 <# if( objInfo.IsIntKey) { if( (numberOfFields) <= 15) { #>
             offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, <#= numberOfFields #>);
 <# } else { #>
@@ -99,7 +110,10 @@ namespace <#= Namespace #>
             offset += global::MessagePack.MessagePackBinary.WriteMapHeader(ref bytes, offset, <#= objInfo.WriteCount #>);
 <# } #>
 <# if(objInfo.IsIntKey) { #>
+
             offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, TypeId);
+            offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, objectId);
+
 <# for(var i = 0; i <= objInfo.MaxKey; i++) { var member = objInfo.GetMember(i); #>
 <# if( member == null) { #>
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
@@ -113,7 +127,7 @@ namespace <#= Namespace #>
             return offset - startOffset;
         }
 
-        public <#= objInfo.FullName #> Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        public <#= objInfo.FullName #> Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
             {
@@ -136,6 +150,19 @@ namespace <#= Namespace #>
             var writtedTypeId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
             offset += readSize;
 
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.Reference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+                
+                if (context.DeserializedObjects.ContainsKey(referencedObjectId))
+                {
+                    return (<#= objInfo.FullName #>) context.DeserializedObjects[referencedObjectId];
+                }
+                return null;
+            }
+
             if (writtedTypeId != TypeId)
             {
                 var actualType = TypeRegistry.Types[writtedTypeId];
@@ -148,14 +175,17 @@ namespace <#= Namespace #>
                 var formatter = untypedFormatterResolver.GetFormatter(actualType);
 
                 offset = startOffset;
-                return (<#= objInfo.FullName #>) formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                return (<#= objInfo.FullName #>) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
             }
+
+            var objectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
 
 <# foreach(var x in objInfo.Members) { #>
             var __<#= x.Name #>__ = default(<#= x.Type #>);
 <# } #>
 
-            for (int i = 0; i < length - 1; i++)
+            for (int i = 0; i < length - 2; i++)
             {
 <# if(objInfo.IsStringKey) { #>
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
@@ -198,17 +228,20 @@ namespace <#= Namespace #>
 <# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
             ____result.OnAfterDeserialize();
 <# } #>
+
+            context.DeserializedObjects[objectId] = ____result;
+
             return ____result;
         }
 
-        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
         {
-            return Serialize(ref bytes, offset, (<#= objInfo.FullName #>) value, formatterResolver);
+            return Serialize(ref bytes, offset, (<#= objInfo.FullName #>) value, formatterResolver, context);
         }
 
-        object IMessagePackFormatter<object>.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        object IMessagePackFormatter<object>.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
-            return Deserialize(bytes, offset, formatterResolver, out readSize);
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
         }
     }
 

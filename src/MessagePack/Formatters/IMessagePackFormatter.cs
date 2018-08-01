@@ -1,5 +1,4 @@
-﻿
-namespace MessagePack.Formatters
+﻿namespace MessagePack.Formatters
 {
     // marker
     public interface IMessagePackFormatter
@@ -9,8 +8,8 @@ namespace MessagePack.Formatters
 
     public interface IMessagePackFormatter<T> : IMessagePackFormatter
     {
-        int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver);
-        T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize);
+        int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver, SerializationContext context);
+        T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context);
     }
 
     public interface IMessagePackUntypedFormatter : IMessagePackFormatter<object>

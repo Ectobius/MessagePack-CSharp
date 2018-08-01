@@ -19,7 +19,7 @@ namespace MessagePack.Formatters
 
     public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
     {
-        public int Serialize(ref byte[] bytes, int offset, <#= t #> value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, <#= t #> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -31,14 +31,14 @@ namespace MessagePack.Formatters
                 offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= i #>);
 
 <# for(var j = 1; j <= i; j++) { #>
-                offset += formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Serialize(ref bytes, offset, value.<#= toItem(j) #>, formatterResolver);
+                offset += formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Serialize(ref bytes, offset, value.<#= toItem(j) #>, formatterResolver, context);
 <# } #>
 
                 return offset - startOffset;
             }
         }
 
-        public <#= t #> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public <#= t #> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -53,7 +53,7 @@ namespace MessagePack.Formatters
                 offset += readSize;
 
 <# for(var j = 1; j <= i; j++) { #>
-                var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                 offset += readSize;
 <# } #>
             

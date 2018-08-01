@@ -795,7 +795,7 @@ namespace GeneratedFormatter
                 };
             }
 
-            public int Serialize(ref byte[] bytes, int num, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
+            public int Serialize(ref byte[] bytes, int num, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver, SerializationContext context)
             {
                 if (stringKeySerializerTarget == null)
                 {
@@ -824,7 +824,7 @@ namespace GeneratedFormatter
                 return num - num2;
             }
 
-            public StringKeySerializerTarget Deserialize(byte[] bytes, int num, IFormatterResolver formatterResolver, out int ptr)
+            public StringKeySerializerTarget Deserialize(byte[] bytes, int num, IFormatterResolver formatterResolver, out int ptr, DeserializationContext context)
             {
                 if (MessagePackBinary.IsNil(bytes, num))
                 {
@@ -968,7 +968,7 @@ namespace GeneratedFormatter
                 };
             }
 
-            public int Serialize(ref byte[] bytes, int num, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
+            public int Serialize(ref byte[] bytes, int num, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver, SerializationContext context)
             {
                 if (stringKeySerializerTarget == null)
                 {
@@ -997,7 +997,7 @@ namespace GeneratedFormatter
                 return num - num2;
             }
 
-            public StringKeySerializerTarget Deserialize(byte[] bytes, int num, IFormatterResolver formatterResolver, out int ptr)
+            public StringKeySerializerTarget Deserialize(byte[] bytes, int num, IFormatterResolver formatterResolver, out int ptr, DeserializationContext context)
             {
                 if (MessagePackBinary.IsNil(bytes, num))
                 {
@@ -1118,12 +1118,12 @@ namespace GeneratedFormatter
             }
 
 
-            public int Serialize(ref byte[] bytes, int offset, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
+            public int Serialize(ref byte[] bytes, int offset, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver, SerializationContext context)
             {
                 throw new NotImplementedException();
             }
 
-            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(byte[] bytes, int offset, newmsgpack::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(byte[] bytes, int offset, newmsgpack::MessagePack.IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
             {
                 if (newmsgpack::MessagePack.MessagePackBinary.IsNil(bytes, offset))
                 {
@@ -1247,12 +1247,12 @@ namespace GeneratedFormatter
             }
 
 
-            public int Serialize(ref byte[] bytes, int offset, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
+            public int Serialize(ref byte[] bytes, int offset, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver, SerializationContext context)
             {
                 throw new NotImplementedException();
             }
 
-            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(byte[] bytes, int offset, newmsgpack::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(byte[] bytes, int offset, newmsgpack::MessagePack.IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
             {
                 if (newmsgpack::MessagePack.MessagePackBinary.IsNil(bytes, offset))
                 {

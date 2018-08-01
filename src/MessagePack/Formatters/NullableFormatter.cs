@@ -7,7 +7,7 @@ namespace MessagePack.Formatters
     public sealed class NullableFormatter<T> : IMessagePackFormatter<T?>
         where T : struct
     {
-        public int Serialize(ref byte[] bytes, int offset, T? value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, T? value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -15,11 +15,11 @@ namespace MessagePack.Formatters
             }
             else
             {
-                return formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Value, formatterResolver);
+                return formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Value, formatterResolver, context);
             }
         }
 
-        public T? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -28,7 +28,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                return formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                return formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
             }
         }
     }
@@ -43,7 +43,7 @@ namespace MessagePack.Formatters
             this.underlyingFormatter = underlyingFormatter;
         }
 
-        public int Serialize(ref byte[] bytes, int offset, T? value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, T? value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -51,11 +51,11 @@ namespace MessagePack.Formatters
             }
             else
             {
-                return underlyingFormatter.Serialize(ref bytes, offset, value.Value, formatterResolver);
+                return underlyingFormatter.Serialize(ref bytes, offset, value.Value, formatterResolver, context);
             }
         }
 
-        public T? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -64,7 +64,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                return underlyingFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                return underlyingFormatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
             }
         }
     }

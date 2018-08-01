@@ -39,12 +39,12 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, Nil value, IFormatterResolver typeResolver)
+        public int Serialize(ref byte[] bytes, int offset, Nil value, IFormatterResolver typeResolver, SerializationContext context)
         {
             return MessagePackBinary.WriteNil(ref bytes, offset);
         }
 
-        public Nil Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
+        public Nil Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize, DeserializationContext context)
         {
             return MessagePackBinary.ReadNil(bytes, offset, out readSize);
         }
@@ -60,12 +60,12 @@ namespace MessagePack.Formatters
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, Nil? value, IFormatterResolver typeResolver)
+        public int Serialize(ref byte[] bytes, int offset, Nil? value, IFormatterResolver typeResolver, SerializationContext context)
         {
             return MessagePackBinary.WriteNil(ref bytes, offset);
         }
 
-        public Nil? Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
+        public Nil? Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize, DeserializationContext context)
         {
             return MessagePackBinary.ReadNil(bytes, offset, out readSize);
         }

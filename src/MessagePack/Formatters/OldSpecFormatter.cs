@@ -9,17 +9,17 @@ namespace MessagePack.Formatters
     {
         public static readonly NativeDateTimeFormatter Instance = new NativeDateTimeFormatter();
 
-        public int Serialize(ref byte[] bytes, int offset, DateTime value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, DateTime value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             var dateData = value.ToBinary();
             return MessagePackBinary.WriteInt64(ref bytes, offset, dateData);
         }
 
-        public DateTime Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public DateTime Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.GetMessagePackType(bytes, offset) == MessagePackType.Extension)
             {
-                return DateTimeFormatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
+                return DateTimeFormatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize, context);
             }
 
             var dateData = MessagePackBinary.ReadInt64(bytes, offset, out readSize);
@@ -31,7 +31,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NativeDateTimeArrayFormatter Instance = new NativeDateTimeArrayFormatter();
 
-        public int Serialize(ref byte[] bytes, int offset, DateTime[] value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, DateTime[] value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null)
             {
@@ -50,7 +50,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public DateTime[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public DateTime[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -89,7 +89,7 @@ namespace MessagePack.Formatters
         public static readonly OldSpecStringFormatter Instance = new OldSpecStringFormatter();
 
         // Old spec does not exists str 8 format.
-        public int Serialize(ref byte[] bytes, int offset, string value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, string value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null) return MessagePackBinary.WriteNil(ref bytes, offset);
 
@@ -151,7 +151,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public string Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public string Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             return MessagePackBinary.ReadString(bytes, offset, out readSize);
         }
@@ -164,7 +164,7 @@ namespace MessagePack.Formatters
     {
         public static readonly OldSpecBinaryFormatter Instance = new OldSpecBinaryFormatter();
 
-        public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver, SerializationContext context)
         {
             if (value == null) return MessagePackBinary.WriteNil(ref bytes, offset);
 
@@ -202,7 +202,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             var type = MessagePackBinary.GetMessagePackType(bytes, offset);
             if (type == MessagePackType.Nil)

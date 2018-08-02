@@ -41,6 +41,7 @@ namespace ConfigurationTest
                     },
                     tima
                 },
+                FavoritePet = new Pet { Name = "Lucky", Power = 17.9f },
                 Numbers = new [] { 3, 9, 17, 32},
                 ExternalObject = externalObject
             };
@@ -73,6 +74,22 @@ namespace ConfigurationTest
             }
 
             Console.WriteLine(deserializedPerson.Pets[1] == deserializedPerson.Pets[3]);
+
+            Console.WriteLine("Let's corrupt some info...");
+
+            person.Name = "Farman";
+            person.FavoritePet.Power = 0f;
+
+            Console.WriteLine(person);
+            Console.WriteLine(person.FavoritePet);
+
+            var originalPerson = person;
+            var originalPet = person.FavoritePet;
+            MessagePackSerializer.Populate(ref person, bytes, deserializationOptions);
+            Console.WriteLine(person);
+            Console.WriteLine(person.FavoritePet);
+            Console.WriteLine("Person is original person: {0}", person == originalPerson);
+            Console.WriteLine("Pet is original pet: {0}", person.FavoritePet == originalPet);
         }
 
         static void RegisterResolvers()

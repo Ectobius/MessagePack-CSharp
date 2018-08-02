@@ -143,6 +143,11 @@ namespace MessagePack.CodeGenerator
                 return $"formatterResolver.GetFormatterWithVerify<{Type}>().Deserialize(bytes, offset, formatterResolver, out readSize, context)";
             }
         }
+
+        public bool IsPrimitive()
+        {
+            return primitiveTypes.Contains(Type);
+        }
     }
 
     public class EnumSerializationInfo : IResolverRegisterInfo

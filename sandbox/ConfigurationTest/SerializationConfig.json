@@ -1,7 +1,7 @@
 {
   "ModelConfigurations": {
     "ConfigurationTest.Person": {
-      "NextValidKey": 6,
+      "NextValidKey": 7,
       "Members": [
         {
           "Name": "Name",
@@ -32,6 +32,11 @@
           "Name": "ExternalObject",
           "TypeFullName": "ConfigurationTest.ExternalObject",
           "Key": 5
+        },
+        {
+          "Name": "FavoritePet",
+          "TypeFullName": "ConfigurationTest.Pet",
+          "Key": 6
         }
       ],
       "TypeId": 64

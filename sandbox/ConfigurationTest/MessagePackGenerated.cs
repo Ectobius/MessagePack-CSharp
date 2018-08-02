@@ -142,7 +142,7 @@ namespace ConfigurationTest.Formatters
     }
 
 
-    public sealed class ExternalObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<ConfigurationTest.ExternalObject>, IMessagePackUntypedFormatter
+    public sealed class ExternalObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatterWithPopulate<ConfigurationTest.ExternalObject>, IMessagePackUntypedFormatterWithPopulate, IMessagePackUntypedFormatter
     {
         private const int TypeId = 0;
 
@@ -267,10 +267,111 @@ namespace ConfigurationTest.Formatters
         {
             return Deserialize(bytes, offset, formatterResolver, out readSize, context);
         }
+
+        public void Populate(ref ConfigurationTest.ExternalObject value, byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                value = null;
+                return;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var writtedTypeId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
+
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.ExternalReference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+
+                if (context.ExternalObjectsByIds != null && context.ExternalObjectsByIds.ContainsKey(referencedObjectId))
+                {
+                    value = (ConfigurationTest.ExternalObject) context.ExternalObjectsByIds[referencedObjectId];
+                    return;
+                }
+
+                value = null;
+                return;
+            }
+
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.Reference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+                
+                if (context.DeserializedObjects.ContainsKey(referencedObjectId))
+                {
+                    value = (ConfigurationTest.ExternalObject) context.DeserializedObjects[referencedObjectId];
+                    return;
+                }
+                value = null;
+                return;
+            }
+
+            var actualType = TypeRegistry.Types[writtedTypeId];
+            if (actualType != value.GetType())
+            {
+                if (!(formatterResolver is IUntypedFormatterResolver))
+                {
+                    throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
+                }
+
+                var untypedFormatterResolver = formatterResolver as IUntypedFormatterResolver;
+                var formatter = untypedFormatterResolver.GetFormatter(actualType);
+
+                if (value.GetType().IsSubclassOf(actualType))
+                {
+                    if (actualType != typeof(ConfigurationTest.ExternalObject))
+                    {
+                        var formatterWithPopulate = formatter as IMessagePackUntypedFormatterWithPopulate;
+                        var valueObject = (object) value;
+                        formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
+                        return;
+                    }
+                }
+                else
+                {
+                    offset = startOffset;
+                    value = (ConfigurationTest.ExternalObject) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                    return;
+                }
+            }
+
+            var objectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
+
+            for (int i = 0; i < length - 2; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+        }
+
+        void IMessagePackFormatterWithPopulate<object>.Populate(ref object value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            var typedValue = (ConfigurationTest.ExternalObject) value;
+            Populate(ref typedValue, bytes, offset, formatterResolver, out readSize, context);
+        }
     }
 
 
-    public sealed class PetFormatter : global::MessagePack.Formatters.IMessagePackFormatter<ConfigurationTest.Pet>, IMessagePackUntypedFormatter
+    public sealed class PetFormatter : global::MessagePack.Formatters.IMessagePackFormatterWithPopulate<ConfigurationTest.Pet>, IMessagePackUntypedFormatterWithPopulate, IMessagePackUntypedFormatter
     {
         private const int TypeId = 65;
 
@@ -440,10 +541,144 @@ namespace ConfigurationTest.Formatters
         {
             return Deserialize(bytes, offset, formatterResolver, out readSize, context);
         }
+
+        public void Populate(ref ConfigurationTest.Pet value, byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                value = null;
+                return;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var writtedTypeId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
+
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.ExternalReference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+
+                if (context.ExternalObjectsByIds != null && context.ExternalObjectsByIds.ContainsKey(referencedObjectId))
+                {
+                    value = (ConfigurationTest.Pet) context.ExternalObjectsByIds[referencedObjectId];
+                    return;
+                }
+
+                value = null;
+                return;
+            }
+
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.Reference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+                
+                if (context.DeserializedObjects.ContainsKey(referencedObjectId))
+                {
+                    value = (ConfigurationTest.Pet) context.DeserializedObjects[referencedObjectId];
+                    return;
+                }
+                value = null;
+                return;
+            }
+
+            var actualType = TypeRegistry.Types[writtedTypeId];
+            if (actualType != value.GetType())
+            {
+                if (!(formatterResolver is IUntypedFormatterResolver))
+                {
+                    throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
+                }
+
+                var untypedFormatterResolver = formatterResolver as IUntypedFormatterResolver;
+                var formatter = untypedFormatterResolver.GetFormatter(actualType);
+
+                if (value.GetType().IsSubclassOf(actualType))
+                {
+                    if (actualType != typeof(ConfigurationTest.Pet))
+                    {
+                        var formatterWithPopulate = formatter as IMessagePackUntypedFormatterWithPopulate;
+                        var valueObject = (object) value;
+                        formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
+                        return;
+                    }
+                }
+                else
+                {
+                    offset = startOffset;
+                    value = (ConfigurationTest.Pet) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                    return;
+                }
+            }
+
+            var objectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
+
+            for (int i = 0; i < length - 2; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    case 0:
+                        var formatterName = formatterResolver.GetFormatterWithVerify<System.String>();
+                        if (formatterName is IMessagePackFormatterWithPopulate<System.String> formatterWithPopulateName)
+                        {
+                            var __Name__ = value.Name;
+                            formatterWithPopulateName.Populate(ref __Name__, bytes, offset, formatterResolver, out readSize, context);
+                            if (__Name__ != value.Name) {
+                                value.Name = __Name__;
+                            }
+                        }
+                        else
+                        {
+                            value.Name = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        }
+                        break;
+                    case 1:
+                        value.Power = MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                        break;
+                    case 2:
+                        var formatterExternalObject = formatterResolver.GetFormatterWithVerify<ConfigurationTest.ExternalObject>();
+                        if (formatterExternalObject is IMessagePackFormatterWithPopulate<ConfigurationTest.ExternalObject> formatterWithPopulateExternalObject)
+                        {
+                            var __ExternalObject__ = value.ExternalObject;
+                            formatterWithPopulateExternalObject.Populate(ref __ExternalObject__, bytes, offset, formatterResolver, out readSize, context);
+                            if (__ExternalObject__ != value.ExternalObject) {
+                                value.ExternalObject = __ExternalObject__;
+                            }
+                        }
+                        else
+                        {
+                            value.ExternalObject = formatterResolver.GetFormatterWithVerify<ConfigurationTest.ExternalObject>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        }
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+        }
+
+        void IMessagePackFormatterWithPopulate<object>.Populate(ref object value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            var typedValue = (ConfigurationTest.Pet) value;
+            Populate(ref typedValue, bytes, offset, formatterResolver, out readSize, context);
+        }
     }
 
 
-    public sealed class PersonFormatter : global::MessagePack.Formatters.IMessagePackFormatter<ConfigurationTest.Person>, IMessagePackUntypedFormatter
+    public sealed class PersonFormatter : global::MessagePack.Formatters.IMessagePackFormatterWithPopulate<ConfigurationTest.Person>, IMessagePackUntypedFormatterWithPopulate, IMessagePackUntypedFormatter
     {
         private const int TypeId = 64;
 
@@ -493,7 +728,7 @@ namespace ConfigurationTest.Formatters
             int objectId = context.PutToSerialized(value);
 
 
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 8);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 9);
 
             offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, TypeId);
             offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, objectId);
@@ -504,6 +739,7 @@ namespace ConfigurationTest.Formatters
             offset += formatterResolver.GetFormatterWithVerify<System.Collections.Generic.List<ConfigurationTest.Pet>>().Serialize(ref bytes, offset, value.Pets, formatterResolver, context);
             offset += formatterResolver.GetFormatterWithVerify<System.Int32[]>().Serialize(ref bytes, offset, value.Numbers, formatterResolver, context);
             offset += formatterResolver.GetFormatterWithVerify<ConfigurationTest.ExternalObject>().Serialize(ref bytes, offset, value.ExternalObject, formatterResolver, context);
+            offset += formatterResolver.GetFormatterWithVerify<ConfigurationTest.Pet>().Serialize(ref bytes, offset, value.FavoritePet, formatterResolver, context);
             return offset - startOffset;
         }
 
@@ -573,6 +809,7 @@ namespace ConfigurationTest.Formatters
             var __Pets__ = default(System.Collections.Generic.List<ConfigurationTest.Pet>);
             var __Numbers__ = default(System.Int32[]);
             var __ExternalObject__ = default(ConfigurationTest.ExternalObject);
+            var __FavoritePet__ = default(ConfigurationTest.Pet);
 
             for (int i = 0; i < length - 2; i++)
             {
@@ -598,6 +835,9 @@ namespace ConfigurationTest.Formatters
                     case 5:
                         __ExternalObject__ = formatterResolver.GetFormatterWithVerify<ConfigurationTest.ExternalObject>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         break;
+                    case 6:
+                        __FavoritePet__ = formatterResolver.GetFormatterWithVerify<ConfigurationTest.Pet>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        break;
                     default:
                         readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                         break;
@@ -615,6 +855,7 @@ namespace ConfigurationTest.Formatters
             ____result.Pets = __Pets__;
             ____result.Numbers = __Numbers__;
             ____result.ExternalObject = __ExternalObject__;
+            ____result.FavoritePet = __FavoritePet__;
 
             context.DeserializedObjects[objectId] = ____result;
 
@@ -631,10 +872,192 @@ namespace ConfigurationTest.Formatters
         {
             return Deserialize(bytes, offset, formatterResolver, out readSize, context);
         }
+
+        public void Populate(ref ConfigurationTest.Person value, byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                value = null;
+                return;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var writtedTypeId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
+
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.ExternalReference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+
+                if (context.ExternalObjectsByIds != null && context.ExternalObjectsByIds.ContainsKey(referencedObjectId))
+                {
+                    value = (ConfigurationTest.Person) context.ExternalObjectsByIds[referencedObjectId];
+                    return;
+                }
+
+                value = null;
+                return;
+            }
+
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.Reference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+                
+                if (context.DeserializedObjects.ContainsKey(referencedObjectId))
+                {
+                    value = (ConfigurationTest.Person) context.DeserializedObjects[referencedObjectId];
+                    return;
+                }
+                value = null;
+                return;
+            }
+
+            var actualType = TypeRegistry.Types[writtedTypeId];
+            if (actualType != value.GetType())
+            {
+                if (!(formatterResolver is IUntypedFormatterResolver))
+                {
+                    throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
+                }
+
+                var untypedFormatterResolver = formatterResolver as IUntypedFormatterResolver;
+                var formatter = untypedFormatterResolver.GetFormatter(actualType);
+
+                if (value.GetType().IsSubclassOf(actualType))
+                {
+                    if (actualType != typeof(ConfigurationTest.Person))
+                    {
+                        var formatterWithPopulate = formatter as IMessagePackUntypedFormatterWithPopulate;
+                        var valueObject = (object) value;
+                        formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
+                        return;
+                    }
+                }
+                else
+                {
+                    offset = startOffset;
+                    value = (ConfigurationTest.Person) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                    return;
+                }
+            }
+
+            var objectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
+
+            for (int i = 0; i < length - 2; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    case 0:
+                        var formatterName = formatterResolver.GetFormatterWithVerify<System.String>();
+                        if (formatterName is IMessagePackFormatterWithPopulate<System.String> formatterWithPopulateName)
+                        {
+                            var __Name__ = value.Name;
+                            formatterWithPopulateName.Populate(ref __Name__, bytes, offset, formatterResolver, out readSize, context);
+                            if (__Name__ != value.Name) {
+                                value.Name = __Name__;
+                            }
+                        }
+                        else
+                        {
+                            value.Name = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        }
+                        break;
+                    case 1:
+                        value.Age = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 2:
+                        value.Height = MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                        break;
+                    case 3:
+                        var formatterPets = formatterResolver.GetFormatterWithVerify<System.Collections.Generic.List<ConfigurationTest.Pet>>();
+                        if (formatterPets is IMessagePackFormatterWithPopulate<System.Collections.Generic.List<ConfigurationTest.Pet>> formatterWithPopulatePets)
+                        {
+                            var __Pets__ = value.Pets;
+                            formatterWithPopulatePets.Populate(ref __Pets__, bytes, offset, formatterResolver, out readSize, context);
+                            if (__Pets__ != value.Pets) {
+                                value.Pets = __Pets__;
+                            }
+                        }
+                        else
+                        {
+                            value.Pets = formatterResolver.GetFormatterWithVerify<System.Collections.Generic.List<ConfigurationTest.Pet>>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        }
+                        break;
+                    case 4:
+                        var formatterNumbers = formatterResolver.GetFormatterWithVerify<System.Int32[]>();
+                        if (formatterNumbers is IMessagePackFormatterWithPopulate<System.Int32[]> formatterWithPopulateNumbers)
+                        {
+                            var __Numbers__ = value.Numbers;
+                            formatterWithPopulateNumbers.Populate(ref __Numbers__, bytes, offset, formatterResolver, out readSize, context);
+                            if (__Numbers__ != value.Numbers) {
+                                value.Numbers = __Numbers__;
+                            }
+                        }
+                        else
+                        {
+                            value.Numbers = formatterResolver.GetFormatterWithVerify<System.Int32[]>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        }
+                        break;
+                    case 5:
+                        var formatterExternalObject = formatterResolver.GetFormatterWithVerify<ConfigurationTest.ExternalObject>();
+                        if (formatterExternalObject is IMessagePackFormatterWithPopulate<ConfigurationTest.ExternalObject> formatterWithPopulateExternalObject)
+                        {
+                            var __ExternalObject__ = value.ExternalObject;
+                            formatterWithPopulateExternalObject.Populate(ref __ExternalObject__, bytes, offset, formatterResolver, out readSize, context);
+                            if (__ExternalObject__ != value.ExternalObject) {
+                                value.ExternalObject = __ExternalObject__;
+                            }
+                        }
+                        else
+                        {
+                            value.ExternalObject = formatterResolver.GetFormatterWithVerify<ConfigurationTest.ExternalObject>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        }
+                        break;
+                    case 6:
+                        var formatterFavoritePet = formatterResolver.GetFormatterWithVerify<ConfigurationTest.Pet>();
+                        if (formatterFavoritePet is IMessagePackFormatterWithPopulate<ConfigurationTest.Pet> formatterWithPopulateFavoritePet)
+                        {
+                            var __FavoritePet__ = value.FavoritePet;
+                            formatterWithPopulateFavoritePet.Populate(ref __FavoritePet__, bytes, offset, formatterResolver, out readSize, context);
+                            if (__FavoritePet__ != value.FavoritePet) {
+                                value.FavoritePet = __FavoritePet__;
+                            }
+                        }
+                        else
+                        {
+                            value.FavoritePet = formatterResolver.GetFormatterWithVerify<ConfigurationTest.Pet>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        }
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+        }
+
+        void IMessagePackFormatterWithPopulate<object>.Populate(ref object value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            var typedValue = (ConfigurationTest.Person) value;
+            Populate(ref typedValue, bytes, offset, formatterResolver, out readSize, context);
+        }
     }
 
 
-    public sealed class SuperPetFormatter : global::MessagePack.Formatters.IMessagePackFormatter<ConfigurationTest.SuperPet>, IMessagePackUntypedFormatter
+    public sealed class SuperPetFormatter : global::MessagePack.Formatters.IMessagePackFormatterWithPopulate<ConfigurationTest.SuperPet>, IMessagePackUntypedFormatterWithPopulate, IMessagePackUntypedFormatter
     {
         private const int TypeId = 66;
 
@@ -809,6 +1232,143 @@ namespace ConfigurationTest.Formatters
         object IMessagePackFormatter<object>.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             return Deserialize(bytes, offset, formatterResolver, out readSize, context);
+        }
+
+        public void Populate(ref ConfigurationTest.SuperPet value, byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                value = null;
+                return;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var writtedTypeId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
+
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.ExternalReference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+
+                if (context.ExternalObjectsByIds != null && context.ExternalObjectsByIds.ContainsKey(referencedObjectId))
+                {
+                    value = (ConfigurationTest.SuperPet) context.ExternalObjectsByIds[referencedObjectId];
+                    return;
+                }
+
+                value = null;
+                return;
+            }
+
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.Reference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+                
+                if (context.DeserializedObjects.ContainsKey(referencedObjectId))
+                {
+                    value = (ConfigurationTest.SuperPet) context.DeserializedObjects[referencedObjectId];
+                    return;
+                }
+                value = null;
+                return;
+            }
+
+            var actualType = TypeRegistry.Types[writtedTypeId];
+            if (actualType != value.GetType())
+            {
+                if (!(formatterResolver is IUntypedFormatterResolver))
+                {
+                    throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
+                }
+
+                var untypedFormatterResolver = formatterResolver as IUntypedFormatterResolver;
+                var formatter = untypedFormatterResolver.GetFormatter(actualType);
+
+                if (value.GetType().IsSubclassOf(actualType))
+                {
+                    if (actualType != typeof(ConfigurationTest.SuperPet))
+                    {
+                        var formatterWithPopulate = formatter as IMessagePackUntypedFormatterWithPopulate;
+                        var valueObject = (object) value;
+                        formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
+                        return;
+                    }
+                }
+                else
+                {
+                    offset = startOffset;
+                    value = (ConfigurationTest.SuperPet) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                    return;
+                }
+            }
+
+            var objectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
+
+            for (int i = 0; i < length - 2; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    case 0:
+                        value.Kind = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 1:
+                        var formatterName = formatterResolver.GetFormatterWithVerify<System.String>();
+                        if (formatterName is IMessagePackFormatterWithPopulate<System.String> formatterWithPopulateName)
+                        {
+                            var __Name__ = value.Name;
+                            formatterWithPopulateName.Populate(ref __Name__, bytes, offset, formatterResolver, out readSize, context);
+                            if (__Name__ != value.Name) {
+                                value.Name = __Name__;
+                            }
+                        }
+                        else
+                        {
+                            value.Name = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        }
+                        break;
+                    case 2:
+                        value.Power = MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                        break;
+                    case 3:
+                        var formatterExternalObject = formatterResolver.GetFormatterWithVerify<ConfigurationTest.ExternalObject>();
+                        if (formatterExternalObject is IMessagePackFormatterWithPopulate<ConfigurationTest.ExternalObject> formatterWithPopulateExternalObject)
+                        {
+                            var __ExternalObject__ = value.ExternalObject;
+                            formatterWithPopulateExternalObject.Populate(ref __ExternalObject__, bytes, offset, formatterResolver, out readSize, context);
+                            if (__ExternalObject__ != value.ExternalObject) {
+                                value.ExternalObject = __ExternalObject__;
+                            }
+                        }
+                        else
+                        {
+                            value.ExternalObject = formatterResolver.GetFormatterWithVerify<ConfigurationTest.ExternalObject>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        }
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+        }
+
+        void IMessagePackFormatterWithPopulate<object>.Populate(ref object value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            var typedValue = (ConfigurationTest.SuperPet) value;
+            Populate(ref typedValue, bytes, offset, formatterResolver, out readSize, context);
         }
     }
 

@@ -199,8 +199,6 @@ namespace MessagePack
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
-            var context = new DeserializationContext();
-
             int readSize;
             return DeserializeByFormatter(formatter, bytes.Array, bytes.Offset, resolver, out readSize, options);
         }
@@ -305,6 +303,20 @@ namespace MessagePack
 
 #endif
 
+        public static void Populate<T>(ref T value, byte[] bytes, DeserializationOptions options = null)
+        {
+            Populate(ref value, bytes, defaultResolver, options);
+        }
+
+        public static void Populate<T>(ref T value, byte[] bytes, IFormatterResolver resolver, DeserializationOptions options = null)
+        {
+            if (resolver == null) resolver = DefaultResolver;
+            var formatter = resolver.GetFormatterWithVerify<T>();
+
+            int readSize;
+            PopulateByFormatter(ref value, formatter, bytes, 0, resolver, out readSize, options);
+        }
+
         private static T DeserializeByFormatter<T>(IMessagePackFormatter<T> formatter, byte[] bytes, int offset, IFormatterResolver resolver,
             out int readSize, DeserializationOptions options)
         {
@@ -316,6 +328,26 @@ namespace MessagePack
             }
 
             return formatter.Deserialize(bytes, offset, resolver, out readSize, context);
+        }
+
+        private static void PopulateByFormatter<T>(ref T value, IMessagePackFormatter<T> formatter, byte[] bytes, int offset, IFormatterResolver resolver,
+            out int readSize, DeserializationOptions options)
+        {
+            var context = new DeserializationContext();
+
+            if (options != null)
+            {
+                context.ExternalObjectsByIds = options.ExternalObjectsByIds;
+            }
+
+            if (formatter is IMessagePackFormatterWithPopulate<T> formatterWithPopulate)
+            {
+                formatterWithPopulate.Populate(ref value, bytes, offset, resolver, out readSize, context);
+            }
+            else
+            {
+                throw new Exception($"Formatter for {typeof(T)} doesn't support populating");
+            }
         }
 
         static int FillFromStream(Stream input, ref byte[] buffer)

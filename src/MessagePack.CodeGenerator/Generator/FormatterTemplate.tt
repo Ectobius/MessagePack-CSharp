@@ -27,7 +27,7 @@ namespace <#= Namespace #>
 
 <# foreach(var objInfo in objectSerializationInfos) { #>
 
-    public sealed class <#= objInfo.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>, IMessagePackUntypedFormatter
+    public sealed class <#= objInfo.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatterWithPopulate<<#= objInfo.FullName #>>, IMessagePackUntypedFormatterWithPopulate, IMessagePackUntypedFormatter
     {
         private const int TypeId = <#= objInfo.TypeId #>;
 
@@ -283,6 +283,150 @@ namespace <#= Namespace #>
         object IMessagePackFormatter<object>.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
         {
             return Deserialize(bytes, offset, formatterResolver, out readSize, context);
+        }
+
+        public void Populate(ref <#= objInfo.FullName #> value, byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+<# if( objInfo.IsClass) { #>
+                readSize = 1;
+                value = null;
+                return;
+<# } else { #>
+                throw new InvalidOperationException("typecode is null, struct not supported");
+<# } #>
+            }
+
+            var startOffset = offset;
+<# if(objInfo.IsStringKey) { #>
+            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+<# } else { #>
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+<# } #>
+            offset += readSize;
+
+            var writtedTypeId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
+
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.ExternalReference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+
+                if (context.ExternalObjectsByIds != null && context.ExternalObjectsByIds.ContainsKey(referencedObjectId))
+                {
+                    value = (<#= objInfo.FullName #>) context.ExternalObjectsByIds[referencedObjectId];
+                    return;
+                }
+
+                value = null;
+                return;
+            }
+
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.Reference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+                
+                if (context.DeserializedObjects.ContainsKey(referencedObjectId))
+                {
+                    value = (<#= objInfo.FullName #>) context.DeserializedObjects[referencedObjectId];
+                    return;
+                }
+                value = null;
+                return;
+            }
+
+            var actualType = TypeRegistry.Types[writtedTypeId];
+            if (actualType != value.GetType())
+            {
+                if (!(formatterResolver is IUntypedFormatterResolver))
+                {
+                    throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
+                }
+
+                var untypedFormatterResolver = formatterResolver as IUntypedFormatterResolver;
+                var formatter = untypedFormatterResolver.GetFormatter(actualType);
+
+                if (value.GetType().IsSubclassOf(actualType))
+                {
+                    if (actualType != typeof(<#= objInfo.FullName #>))
+                    {
+                        var formatterWithPopulate = formatter as IMessagePackUntypedFormatterWithPopulate;
+                        var valueObject = (object) value;
+                        formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
+                        return;
+                    }
+                }
+                else
+                {
+                    offset = startOffset;
+                    value = (<#= objInfo.FullName #>) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                    return;
+                }
+            }
+
+            var objectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
+
+            for (int i = 0; i < length - 2; i++)
+            {
+<# if(objInfo.IsStringKey) { #>
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
+                offset += readSize;
+                int key;
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                {
+                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                    goto NEXT_LOOP;
+                }
+<# } else { #>
+                var key = i;
+<# } #>
+
+                switch (key)
+                {
+<# foreach(var x in objInfo.Members) { #>
+                    case <#= x.IntKey #>:
+<# if (x.IsPrimitive()) { #>
+                        value.<#= x.Name #> = <#= x.GetDeserializeMethodString() #>;
+<# } else { #>
+                        var formatter<#= x.Name #> = formatterResolver.GetFormatterWithVerify<<#= x.Type #>>();
+                        if (formatter<#= x.Name #> is IMessagePackFormatterWithPopulate<<#= x.Type #>> formatterWithPopulate<#= x.Name #>)
+                        {
+                            var __<#= x.Name #>__ = value.<#= x.Name #>;
+                            formatterWithPopulate<#= x.Name #>.Populate(ref __<#= x.Name #>__, bytes, offset, formatterResolver, out readSize, context);
+                            if (__<#= x.Name #>__ != value.<#= x.Name #>) {
+                                value.<#= x.Name #> = __<#= x.Name #>__;
+                            }
+                        }
+                        else
+                        {
+                            value.<#= x.Name #> = <#= x.GetDeserializeMethodString() #>;
+                        }
+<# } #>
+                        break;
+<# } #>
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+<# if(objInfo.IsStringKey) { #>                
+                NEXT_LOOP:
+<# } #>
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+        }
+
+        void IMessagePackFormatterWithPopulate<object>.Populate(ref object value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            var typedValue = (<#= objInfo.FullName #>) value;
+            Populate(ref typedValue, bytes, offset, formatterResolver, out readSize, context);
         }
     }
 

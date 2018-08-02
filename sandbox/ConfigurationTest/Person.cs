@@ -10,6 +10,8 @@ namespace ConfigurationTest
         public List<Pet> Pets { get; set; }
         public int[] Numbers { get; set; }
 
+        public ExternalObject ExternalObject { get; set; }
+
         public override string ToString()
         {
             return $"{Name}:{Age}";

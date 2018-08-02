@@ -25,13 +25,14 @@ namespace MessagePack.CodeGenerator
     {
         public string Name { get; set; }
         public string FullName { get; set; }
+        public bool DontSerialize { get; set; }
         public string Namespace { get; set; }
         public bool IsIntKey { get; set; }
         public bool IsStringKey { get { return !IsIntKey; } }
         public bool IsClass { get; set; }
         public bool IsStruct { get { return !IsClass; } }
         public MemberSerializationInfo[] ConstructorParameters { get; set; }
-        public MemberSerializationInfo[] Members { get; set; }
+        public MemberSerializationInfo[] Members { get; set; } = new MemberSerializationInfo[0];
         public bool HasIMessagePackSerializationCallbackReceiver { get; set; }
         public bool NeedsCastOnBefore { get; set; }
         public bool NeedsCastOnAfter { get; set; }

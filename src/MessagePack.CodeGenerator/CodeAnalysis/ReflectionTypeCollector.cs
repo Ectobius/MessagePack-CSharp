@@ -225,13 +225,6 @@ namespace MessagePack.CodeGenerator
 
         private void CollectObject(Type type)
         {
-            if (!_registeredTypeConfigs.ContainsKey(type))
-            {
-                throw new Exception($"Type ${type} is not registered");
-            }
-
-            var typeConfiguration = _registeredTypeConfigs[type];
-
             var info = new ObjectSerializationInfo
             {
                 Name = type.Name,
@@ -241,10 +234,20 @@ namespace MessagePack.CodeGenerator
                 IsClass = type.IsClass,
                 IsIntKey = true,
                 NeedsCastOnAfter = false,
-                NeedsCastOnBefore = false,
-                TypeId = typeConfiguration.TypeId,
-                Members = typeConfiguration.Members.Select(this.CollectMemberSerializationInfo).ToArray()
+                NeedsCastOnBefore = false
             };
+
+            if (!_registeredTypeConfigs.ContainsKey(type))
+            {
+                info.DontSerialize = true;
+            }
+            else
+            {
+                var typeConfiguration = _registeredTypeConfigs[type];
+
+                info.TypeId = typeConfiguration.TypeId;
+                info.Members = typeConfiguration.Members.Select(this.CollectMemberSerializationInfo).ToArray();
+            }
 
             _collectedObjectInfo.Add(info);
         }

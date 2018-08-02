@@ -51,23 +51,21 @@ namespace MessagePack
         /// <summary>
         /// Serialize to binary with default resolver.
         /// </summary>
-        public static byte[] Serialize<T>(T obj)
+        public static byte[] Serialize<T>(T obj, SerializationOptions options = null)
         {
-            return Serialize(obj, defaultResolver);
+            return Serialize(obj, defaultResolver, options);
         }
 
         /// <summary>
         /// Serialize to binary with specified resolver.
         /// </summary>
-        public static byte[] Serialize<T>(T obj, IFormatterResolver resolver)
+        public static byte[] Serialize<T>(T obj, IFormatterResolver resolver, SerializationOptions options = null)
         {
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
-            var context = new SerializationContext();
-
-            var len = formatter.Serialize(ref buffer, 0, obj, resolver, context);
+            var len = SerializeByFormatter(formatter, ref buffer, 0, obj, resolver, options);
 
             // do not return MemoryPool.Buffer.
             return MessagePackBinary.FastCloneWithResize(buffer, len);
@@ -76,23 +74,21 @@ namespace MessagePack
         /// <summary>
         /// Serialize to binary. Get the raw memory pool byte[]. The result can not share across thread and can not hold, so use quickly.
         /// </summary>
-        public static ArraySegment<byte> SerializeUnsafe<T>(T obj)
+        public static ArraySegment<byte> SerializeUnsafe<T>(T obj, SerializationOptions options = null)
         {
-            return SerializeUnsafe(obj, defaultResolver);
+            return SerializeUnsafe(obj, defaultResolver, options);
         }
 
         /// <summary>
         /// Serialize to binary with specified resolver. Get the raw memory pool byte[]. The result can not share across thread and can not hold, so use quickly.
         /// </summary>
-        public static ArraySegment<byte> SerializeUnsafe<T>(T obj, IFormatterResolver resolver)
+        public static ArraySegment<byte> SerializeUnsafe<T>(T obj, IFormatterResolver resolver, SerializationOptions options = null)
         {
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
-            var context = new SerializationContext();
-
-            var len = formatter.Serialize(ref buffer, 0, obj, resolver, context);
+            var len = SerializeByFormatter(formatter, ref buffer, 0, obj, resolver, options);
 
             // return raw memory pool, unsafe!
             return new ArraySegment<byte>(buffer, 0, len);
@@ -101,7 +97,7 @@ namespace MessagePack
         /// <summary>
         /// Serialize to stream.
         /// </summary>
-        public static void Serialize<T>(Stream stream, T obj)
+        public static void Serialize<T>(Stream stream, T obj, SerializationOptions options = null)
         {
             Serialize(stream, obj, defaultResolver);
         }
@@ -109,15 +105,13 @@ namespace MessagePack
         /// <summary>
         /// Serialize to stream with specified resolver.
         /// </summary>
-        public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
+        public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver, SerializationOptions options = null)
         {
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
-            var context = new SerializationContext();
-
-            var len = formatter.Serialize(ref buffer, 0, obj, resolver, context);
+            var len = SerializeByFormatter(formatter, ref buffer, 0, obj, resolver, options);
 
             // do not need resize.
             stream.Write(buffer, 0, len);
@@ -126,10 +120,10 @@ namespace MessagePack
         /// <summary>
         /// Reflect of resolver.GetFormatterWithVerify[T].Serialize.
         /// </summary>
-        public static int Serialize<T>(ref byte[] bytes, int offset, T value, IFormatterResolver resolver)
+        public static int Serialize<T>(ref byte[] bytes, int offset, T value, IFormatterResolver resolver, SerializationOptions options = null)
         {
-            var context = new SerializationContext();
-            return resolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value, resolver, context);
+            var formatter = resolver.GetFormatterWithVerify<T>();
+            return SerializeByFormatter(formatter, ref bytes, offset, value, resolver, options);
         }
 
 #if NETSTANDARD
@@ -145,17 +139,16 @@ namespace MessagePack
         /// <summary>
         /// Serialize to stream(async) with specified resolver.
         /// </summary>
-        public static async System.Threading.Tasks.Task SerializeAsync<T>(Stream stream, T obj, IFormatterResolver resolver)
+        public static async System.Threading.Tasks.Task SerializeAsync<T>(Stream stream, T obj, IFormatterResolver resolver, SerializationOptions options = null)
         {
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var rentBuffer = BufferPool.Default.Rent();
-            var context = new SerializationContext();
             try
             {
                 var buffer = rentBuffer;
-                var len = formatter.Serialize(ref buffer, 0, obj, resolver, context);
+                var len = SerializeByFormatter(formatter, ref buffer, 0, obj, resolver, options);
 
                 // do not need resize.
                 await stream.WriteAsync(buffer, 0, len).ConfigureAwait(false);
@@ -168,12 +161,40 @@ namespace MessagePack
 
 #endif
 
-        public static T Deserialize<T>(byte[] bytes)
+        private static int SerializeByFormatter<T>(IMessagePackFormatter<T> formatter, ref byte[] buffer, int offset,
+            T value, IFormatterResolver resolver, SerializationOptions options)
         {
-            return Deserialize<T>(bytes, defaultResolver);
+            var context = new SerializationContext();
+
+            if (options != null)
+            {
+                context.ExternalReferenceChecker = options.ExternalReferenceChecker;
+                context.ExternalObjectsByIds = options.ExternalObjectsByIds;
+            }
+
+            return formatter.Serialize(ref buffer, offset, value, resolver, context);
         }
 
-        public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver)
+        public static T Deserialize<T>(byte[] bytes, DeserializationOptions options = null)
+        {
+            return Deserialize<T>(bytes, defaultResolver, options);
+        }
+
+        public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver, DeserializationOptions options = null)
+        {
+            if (resolver == null) resolver = DefaultResolver;
+            var formatter = resolver.GetFormatterWithVerify<T>();
+
+            int readSize;
+            return DeserializeByFormatter(formatter, bytes, 0, resolver, out readSize, options);
+        }
+
+        public static T Deserialize<T>(ArraySegment<byte> bytes, DeserializationOptions options = null)
+        {
+            return Deserialize<T>(bytes, defaultResolver, options);
+        }
+
+        public static T Deserialize<T>(ArraySegment<byte> bytes, IFormatterResolver resolver, DeserializationOptions options = null)
         {
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
@@ -181,46 +202,28 @@ namespace MessagePack
             var context = new DeserializationContext();
 
             int readSize;
-            return formatter.Deserialize(bytes, 0, resolver, out readSize, context);
+            return DeserializeByFormatter(formatter, bytes.Array, bytes.Offset, resolver, out readSize, options);
         }
 
-        public static T Deserialize<T>(ArraySegment<byte> bytes)
+        public static T Deserialize<T>(Stream stream, DeserializationOptions options = null)
         {
-            return Deserialize<T>(bytes, defaultResolver);
+            return Deserialize<T>(stream, defaultResolver, options);
         }
 
-        public static T Deserialize<T>(ArraySegment<byte> bytes, IFormatterResolver resolver)
+        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver, DeserializationOptions options = null)
         {
-            if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
-
-            var context = new DeserializationContext();
-
-            int readSize;
-            return formatter.Deserialize(bytes.Array, bytes.Offset, resolver, out readSize, context);
+            return Deserialize<T>(stream, resolver, false, options);
         }
 
-        public static T Deserialize<T>(Stream stream)
+        public static T Deserialize<T>(Stream stream, bool readStrict, DeserializationOptions options = null)
         {
-            return Deserialize<T>(stream, defaultResolver);
+            return Deserialize<T>(stream, defaultResolver, readStrict, options);
         }
 
-        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
-        {
-            return Deserialize<T>(stream, resolver, false);
-        }
-
-        public static T Deserialize<T>(Stream stream, bool readStrict)
-        {
-            return Deserialize<T>(stream, defaultResolver, readStrict);
-        }
-
-        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver, bool readStrict)
+        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver, bool readStrict, DeserializationOptions options = null)
         {
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
-
-            var context = new DeserializationContext();
 
             if (!readStrict)
             {
@@ -234,7 +237,7 @@ namespace MessagePack
                     if (ms.TryGetBuffer(out buffer))
                     {
                         int readSize;
-                        return formatter.Deserialize(buffer.Array, buffer.Offset, resolver, out readSize, context);
+                        return DeserializeByFormatter(formatter, buffer.Array, buffer.Offset, resolver, out readSize, options);
                     }
                 }
 #endif
@@ -246,7 +249,7 @@ namespace MessagePack
                     FillFromStream(stream, ref buffer);
 
                     int readSize;
-                    return formatter.Deserialize(buffer, 0, resolver, out readSize, context);
+                    return DeserializeByFormatter(formatter, buffer, 0, resolver, out readSize, options);
                 }
             }
             else
@@ -254,7 +257,7 @@ namespace MessagePack
                 int _;
                 var bytes = MessagePackBinary.ReadMessageBlockFromStreamUnsafe(stream, false, out _);
                 int readSize;
-                return formatter.Deserialize(bytes, 0, resolver, out readSize, context);
+                return DeserializeByFormatter(formatter, bytes, 0, resolver, out readSize, options);
             }
         }
 
@@ -268,14 +271,14 @@ namespace MessagePack
 
 #if NETSTANDARD
 
-        public static System.Threading.Tasks.Task<T> DeserializeAsync<T>(Stream stream)
+        public static System.Threading.Tasks.Task<T> DeserializeAsync<T>(Stream stream, DeserializationOptions options = null)
         {
             return DeserializeAsync<T>(stream, defaultResolver);
         }
 
         // readStrict async read is too slow(many Task garbage) so I don't provide async option.
 
-        public static async System.Threading.Tasks.Task<T> DeserializeAsync<T>(Stream stream, IFormatterResolver resolver)
+        public static async System.Threading.Tasks.Task<T> DeserializeAsync<T>(Stream stream, IFormatterResolver resolver, DeserializationOptions options = null)
         {
             var rentBuffer = BufferPool.Default.Rent();
             var buf = rentBuffer;
@@ -301,6 +304,19 @@ namespace MessagePack
         }
 
 #endif
+
+        private static T DeserializeByFormatter<T>(IMessagePackFormatter<T> formatter, byte[] bytes, int offset, IFormatterResolver resolver,
+            out int readSize, DeserializationOptions options)
+        {
+            var context = new DeserializationContext();
+
+            if (options != null)
+            {
+                context.ExternalObjectsByIds = options.ExternalObjectsByIds;
+            }
+
+            return formatter.Deserialize(bytes, offset, resolver, out readSize, context);
+        }
 
         static int FillFromStream(Stream input, ref byte[] buffer)
         {

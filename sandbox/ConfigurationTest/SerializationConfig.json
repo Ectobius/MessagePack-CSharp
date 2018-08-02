@@ -19,20 +19,25 @@
           "Key": 2
         },
         {
+          "Name": "Pets",
+          "TypeFullName": "System.Collections.Generic.List`1[[ConfigurationTest.Pet, ConfigurationTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+          "Key": 3
+        },
+        {
           "Name": "Numbers",
           "TypeFullName": "System.Int32[]",
           "Key": 4
         },
         {
-          "Name": "Pets",
-          "TypeFullName": "System.Collections.Generic.List`1[[ConfigurationTest.Pet, ConfigurationTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+          "Name": "ExternalObject",
+          "TypeFullName": "ConfigurationTest.ExternalObject",
           "Key": 5
         }
       ],
       "TypeId": 64
     },
     "ConfigurationTest.Pet": {
-      "NextValidKey": 2,
+      "NextValidKey": 3,
       "Members": [
         {
           "Name": "Name",
@@ -43,12 +48,17 @@
           "Name": "Power",
           "TypeFullName": "System.Single",
           "Key": 1
+        },
+        {
+          "Name": "ExternalObject",
+          "TypeFullName": "ConfigurationTest.ExternalObject",
+          "Key": 2
         }
       ],
       "TypeId": 65
     },
     "ConfigurationTest.SuperPet": {
-      "NextValidKey": 3,
+      "NextValidKey": 4,
       "Members": [
         {
           "Name": "Kind",
@@ -64,6 +74,11 @@
           "Name": "Power",
           "TypeFullName": "System.Single",
           "Key": 2
+        },
+        {
+          "Name": "ExternalObject",
+          "TypeFullName": "ConfigurationTest.ExternalObject",
+          "Key": 3
         }
       ],
       "TypeId": 66

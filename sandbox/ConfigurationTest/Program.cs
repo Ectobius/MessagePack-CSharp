@@ -15,6 +15,15 @@ namespace ConfigurationTest
 
             var tima = new Pet {Name = "Tima", Power = 7.9f};
 
+            var externalObject = new ExternalObject()
+            {
+                Quality = 7,
+                Values = new Dictionary<string, object>
+                {
+                    {"fideliy", "important"}
+                }
+            };
+
             var person = new Person
             {
                 Name = "Alex",
@@ -27,20 +36,36 @@ namespace ConfigurationTest
                     {
                         Name = "Miu",
                         Power = 99999f,
-                        Kind = 1
+                        Kind = 1,
+                        ExternalObject = externalObject
                     },
                     tima
                 },
-                Numbers = new [] { 3, 9, 17, 32}
+                Numbers = new [] { 3, 9, 17, 32},
+                ExternalObject = externalObject
             };
 
-            var bytes = MessagePackSerializer.Serialize(person);
+            var serializationOptions = new SerializationOptions
+            {
+                ExternalReferenceChecker = (obj) => obj.GetType() == typeof(ExternalObject)
+            };
+            var bytes = MessagePackSerializer.Serialize(person, serializationOptions);
 
             Console.WriteLine(Convert.ToBase64String(bytes));
             Console.WriteLine(MessagePackSerializer.ToJson(bytes));
 
-            var deserializedPerson = MessagePackSerializer.Deserialize<Person>(bytes);
+            foreach (var key in serializationOptions.ExternalObjectsByIds.Keys)
+            {
+                Console.WriteLine("External object ID: {0}", key);
+            }
+
+            var deserializationOptions = new DeserializationOptions
+            {
+                ExternalObjectsByIds = serializationOptions.ExternalObjectsByIds
+            };
+            var deserializedPerson = MessagePackSerializer.Deserialize<Person>(bytes, deserializationOptions);
             Console.WriteLine(deserializedPerson);
+            Console.WriteLine("External object present: {0}", deserializedPerson.ExternalObject != null);
 
             foreach (var pet in deserializedPerson.Pets)
             {

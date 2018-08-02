@@ -26,7 +26,6 @@ namespace <#= Namespace #>
     }
 
 <# foreach(var objInfo in objectSerializationInfos) { #>
-    <# int numberOfFields = objInfo.MaxKey + 3; #>
 
     public sealed class <#= objInfo.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>, IMessagePackUntypedFormatter
     {
@@ -72,8 +71,26 @@ namespace <#= Namespace #>
             if (value == null)
             {
                 return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }            
+<# } #>
+
+            var startOffset = offset;
+
+            if (context.CheckIfExternal(value))
+            {
+                var externalObjectId = context.PutToExternalObjects(value);
+                offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+                offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, (int)global::MessagePack.ModelSerialization.ReservedTypes.ExternalReference);
+                offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, externalObjectId);
+                return offset - startOffset;
             }
 
+<# if (objInfo.DontSerialize) { #>
+
+            offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            return offset - startOffset;
+
+<# } else { #>
             if (value.GetType() != typeof(<#= objInfo.FullName #>))
             {
                 if (formatterResolver is IUntypedFormatterResolver untypedFormatterResolver)
@@ -82,13 +99,12 @@ namespace <#= Namespace #>
                     return derivedTypeFormatter.Serialize(ref bytes, offset, value, formatterResolver, context);
                 }
             }
-<# } #>            
-<#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
+
+<# if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
             ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
 <# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
             value.OnBeforeSerialize();
 <# } #>
-            var startOffset = offset;
 
             if (context != null && context.SerializedObjects.ContainsKey(value))
             {
@@ -99,6 +115,8 @@ namespace <#= Namespace #>
             }
 
             int objectId = context.PutToSerialized(value);
+
+<# int numberOfFields = objInfo.MaxKey + 3; #>
 
 <# if( objInfo.IsIntKey) { if( (numberOfFields) <= 15) { #>
             offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, <#= numberOfFields #>);
@@ -125,6 +143,7 @@ namespace <#= Namespace #>
             offset += <#= x.GetSerializeMethodString() #>;
 <# } } #>
             return offset - startOffset;
+<# } #>
         }
 
         public <#= objInfo.FullName #> Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
@@ -149,6 +168,20 @@ namespace <#= Namespace #>
 
             var writtedTypeId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
             offset += readSize;
+
+            if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.ExternalReference)
+            {
+                var referencedObjectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+                readSize = offset - startOffset;
+
+                if (context.ExternalObjectsByIds != null && context.ExternalObjectsByIds.ContainsKey(referencedObjectId))
+                {
+                    return (<#= objInfo.FullName #>) context.ExternalObjectsByIds[referencedObjectId];
+                }
+
+                return null;
+            }
 
             if (writtedTypeId == (int) global::MessagePack.ModelSerialization.ReservedTypes.Reference)
             {
@@ -219,6 +252,12 @@ namespace <#= Namespace #>
 
             readSize = offset - startOffset;
 
+<# if (objInfo.DontSerialize) { #>
+            
+            return null;
+
+<# } else { #>
+
             var ____result = _modelFactory.CreateModel<<#= objInfo.FullName #>>(); //new <#= objInfo.GetConstructorString()  #>;
 <# foreach(var x in objInfo.Members.Where(x => x.IsWritable)) { #>
             ____result.<#= x.Name #> = __<#= x.Name #>__;
@@ -232,6 +271,8 @@ namespace <#= Namespace #>
             context.DeserializedObjects[objectId] = ____result;
 
             return ____result;
+
+<# } #>
         }
 
         public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)

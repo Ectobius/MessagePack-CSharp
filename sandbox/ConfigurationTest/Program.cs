@@ -21,6 +21,11 @@ namespace ConfigurationTest
             Console.WriteLine("Test Populating.........");
 
             var person = CreatePerson();
+            var ultimateLucky = new UltimatePet { Name = "Ultimate Lucky", Power = 17.9f, Kind = 999, UberPowerName = "Mother Earth" };
+            person.Pets[0] = ultimateLucky;
+
+            var prevFavorite = person.FavoritePet;
+            person.FavoritePet = ultimateLucky;
 
             var serializationOptions = new SerializationOptions
             {
@@ -36,13 +41,28 @@ namespace ConfigurationTest
                 ExternalObjectsByIds = serializationOptions.ExternalObjectsByIds
             };
 
-            var ultimateLucky = new UltimatePet { Name = "Ultimate Lucky", Power = 17.9f, Kind = 999, UberPowerName = "Mother Earth" };
-            person.FavoritePet = ultimateLucky;
+            
+            person.FavoritePet = prevFavorite;
+
+            var firstPet = person.Pets[0];
+            firstPet.Name = "Changed Name";
+
+            person.Pets.RemoveAt(person.Pets.Count - 1);
+
+            person.Dudes[0].Name = "Some another dude";
+
+            person.LabeledPets["fieldy"].Name = "Some another pet";
+            person.LabeledPets.Remove("green");
+                
             var prevPerson = person;
             MessagePackSerializer.Populate(ref person, bytes, deserializationOptions);
 
             Console.WriteLine("Person is the same: {0}", ReferenceEquals(person, prevPerson));
-            Console.WriteLine("Pet is the same: {0}", person.FavoritePet == ultimateLucky);
+
+            Console.WriteLine("First pet is the same: {0}", person.Pets[0] == ultimateLucky);
+            Console.WriteLine("Favorite pet is reused: {0}", person.FavoritePet == ultimateLucky);
+
+            Console.WriteLine("Pets count: {0}", person.Pets.Count);
         }
 
         static Person CreatePerson()
@@ -77,7 +97,17 @@ namespace ConfigurationTest
                 },
                 FavoritePet = new SuperPet { Name = "Super Lucky", Power = 170.9f, Kind = 67 },
                 Numbers = new[] { 3, 9, 17, 32 },
-                ExternalObject = externalObject
+                ExternalObject = externalObject,
+                Dudes = new List<Person>
+                {
+                    new Person { Name = "John", Age = 31 },
+                    new Person { Name = "Alice", Age = 21 }
+                },
+                LabeledPets = new Dictionary<string, Pet>
+                {
+                    { "green", tima },
+                    { "fieldy", new Pet { Name = "Mike", Power =  9.1f } }
+                }
             };
 
             return person;

@@ -1,7 +1,7 @@
 {
   "ModelConfigurations": {
     "ConfigurationTest.Person": {
-      "NextValidKey": 7,
+      "NextValidKey": 9,
       "Members": [
         {
           "Name": "Name",
@@ -37,6 +37,16 @@
           "Name": "FavoritePet",
           "TypeFullName": "ConfigurationTest.Pet",
           "Key": 6
+        },
+        {
+          "Name": "Dudes",
+          "TypeFullName": "System.Collections.Generic.IList`1[[ConfigurationTest.Person, ConfigurationTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+          "Key": 7
+        },
+        {
+          "Name": "LabeledPets",
+          "TypeFullName": "System.Collections.Generic.Dictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[ConfigurationTest.Pet, ConfigurationTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+          "Key": 8
         }
       ],
       "TypeId": 64

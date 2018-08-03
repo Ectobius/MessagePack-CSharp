@@ -58,15 +58,17 @@ namespace ConfigurationTest.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(7)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(9)
             {
                 {typeof(System.Collections.Generic.List<ConfigurationTest.Pet>), 0 },
                 {typeof(System.Int32[]), 1 },
-                {typeof(ConfigurationTest.ExternalObject), 2 },
-                {typeof(ConfigurationTest.Pet), 3 },
-                {typeof(ConfigurationTest.Person), 4 },
-                {typeof(ConfigurationTest.SuperPet), 5 },
-                {typeof(ConfigurationTest.UltimatePet), 6 },
+                {typeof(System.Collections.Generic.IList<ConfigurationTest.Person>), 2 },
+                {typeof(System.Collections.Generic.Dictionary<System.String, ConfigurationTest.Pet>), 3 },
+                {typeof(ConfigurationTest.ExternalObject), 4 },
+                {typeof(ConfigurationTest.Pet), 5 },
+                {typeof(ConfigurationTest.Person), 6 },
+                {typeof(ConfigurationTest.SuperPet), 7 },
+                {typeof(ConfigurationTest.UltimatePet), 8 },
             };
 
             Cache = new Dictionary<Type, global::MessagePack.Formatters.IMessagePackFormatter>();
@@ -92,18 +94,24 @@ namespace ConfigurationTest.Resolvers
                     formatter = new global::MessagePack.Formatters.ArrayFormatter<System.Int32>();
                     break;
                         case 2:
-                    formatter = new ConfigurationTest.Formatters.ExternalObjectFormatter(ModelFactory);
+                    formatter = new global::MessagePack.Formatters.InterfaceListFormatter<ConfigurationTest.Person>();
                     break;
                         case 3:
-                    formatter = new ConfigurationTest.Formatters.PetFormatter(ModelFactory);
+                    formatter = new global::MessagePack.Formatters.DictionaryFormatter<System.String, ConfigurationTest.Pet>();
                     break;
                         case 4:
-                    formatter = new ConfigurationTest.Formatters.PersonFormatter(ModelFactory);
+                    formatter = new ConfigurationTest.Formatters.ExternalObjectFormatter(ModelFactory);
                     break;
                         case 5:
-                    formatter = new ConfigurationTest.Formatters.SuperPetFormatter(ModelFactory);
+                    formatter = new ConfigurationTest.Formatters.PetFormatter(ModelFactory);
                     break;
                         case 6:
+                    formatter = new ConfigurationTest.Formatters.PersonFormatter(ModelFactory);
+                    break;
+                        case 7:
+                    formatter = new ConfigurationTest.Formatters.SuperPetFormatter(ModelFactory);
+                    break;
+                        case 8:
                     formatter = new ConfigurationTest.Formatters.UltimatePetFormatter(ModelFactory);
                     break;
                     default: return null;
@@ -321,33 +329,24 @@ namespace ConfigurationTest.Formatters
             }
 
             var actualType = TypeRegistry.Types[writtedTypeId];
-            if (actualType != value.GetType())
+
+            if (writtedTypeId != TypeId)
             {
-                if (!(formatterResolver is IUntypedFormatterResolver))
-                {
-                    throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
-                }
+                var formatter = GetFormatterForActualType(actualType, formatterResolver);
+                var formatterWithPopulate = (IMessagePackUntypedFormatterWithPopulate) formatter;
 
-                var untypedFormatterResolver = formatterResolver as IUntypedFormatterResolver;
-                var formatter = untypedFormatterResolver.GetFormatter(actualType);
+                var valueObject = (object)value;
+                offset = startOffset;
+                formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
+                return;
+            }
 
-                if (value.GetType().IsSubclassOf(actualType))
-                {
-                    if (actualType != typeof(ConfigurationTest.ExternalObject))
-                    {
-                        var formatterWithPopulate = formatter as IMessagePackUntypedFormatterWithPopulate;
-                        var valueObject = (object) value;
-                        offset = startOffset;
-                        formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
-                        return;
-                    }
-                }
-                else
-                {
-                    offset = startOffset;
-                    value = (ConfigurationTest.ExternalObject) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
-                    return;
-                }
+            if (actualType != value.GetType() && actualType.IsSubclassOf(value.GetType()))
+            {
+                var formatter = GetFormatterForActualType(actualType, formatterResolver);
+                offset = startOffset;
+                value = (ConfigurationTest.ExternalObject) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                return;
             }
 
             var objectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
@@ -369,6 +368,17 @@ namespace ConfigurationTest.Formatters
             context.DeserializedObjects[objectId] = value;
 
             readSize = offset - startOffset;
+        }
+
+        IMessagePackUntypedFormatter GetFormatterForActualType(Type actualType, IFormatterResolver formatterResolver)
+        {
+            if (!(formatterResolver is IUntypedFormatterResolver))
+            {
+                throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
+            }
+
+            var untypedFormatterResolver = (IUntypedFormatterResolver) formatterResolver;
+            return untypedFormatterResolver.GetFormatter(actualType);
         }
 
         void IMessagePackFormatterWithPopulate<object>.Populate(ref object value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
@@ -598,33 +608,24 @@ namespace ConfigurationTest.Formatters
             }
 
             var actualType = TypeRegistry.Types[writtedTypeId];
-            if (actualType != value.GetType())
+
+            if (writtedTypeId != TypeId)
             {
-                if (!(formatterResolver is IUntypedFormatterResolver))
-                {
-                    throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
-                }
+                var formatter = GetFormatterForActualType(actualType, formatterResolver);
+                var formatterWithPopulate = (IMessagePackUntypedFormatterWithPopulate) formatter;
 
-                var untypedFormatterResolver = formatterResolver as IUntypedFormatterResolver;
-                var formatter = untypedFormatterResolver.GetFormatter(actualType);
+                var valueObject = (object)value;
+                offset = startOffset;
+                formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
+                return;
+            }
 
-                if (value.GetType().IsSubclassOf(actualType))
-                {
-                    if (actualType != typeof(ConfigurationTest.Pet))
-                    {
-                        var formatterWithPopulate = formatter as IMessagePackUntypedFormatterWithPopulate;
-                        var valueObject = (object) value;
-                        offset = startOffset;
-                        formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
-                        return;
-                    }
-                }
-                else
-                {
-                    offset = startOffset;
-                    value = (ConfigurationTest.Pet) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
-                    return;
-                }
+            if (actualType != value.GetType() && actualType.IsSubclassOf(value.GetType()))
+            {
+                var formatter = GetFormatterForActualType(actualType, formatterResolver);
+                offset = startOffset;
+                value = (ConfigurationTest.Pet) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                return;
             }
 
             var objectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
@@ -679,6 +680,17 @@ namespace ConfigurationTest.Formatters
             context.DeserializedObjects[objectId] = value;
 
             readSize = offset - startOffset;
+        }
+
+        IMessagePackUntypedFormatter GetFormatterForActualType(Type actualType, IFormatterResolver formatterResolver)
+        {
+            if (!(formatterResolver is IUntypedFormatterResolver))
+            {
+                throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
+            }
+
+            var untypedFormatterResolver = (IUntypedFormatterResolver) formatterResolver;
+            return untypedFormatterResolver.GetFormatter(actualType);
         }
 
         void IMessagePackFormatterWithPopulate<object>.Populate(ref object value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
@@ -739,7 +751,7 @@ namespace ConfigurationTest.Formatters
             int objectId = context.PutToSerialized(value);
 
 
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 9);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 11);
 
             offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, TypeId);
             offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, objectId);
@@ -751,6 +763,8 @@ namespace ConfigurationTest.Formatters
             offset += formatterResolver.GetFormatterWithVerify<System.Int32[]>().Serialize(ref bytes, offset, value.Numbers, formatterResolver, context);
             offset += formatterResolver.GetFormatterWithVerify<ConfigurationTest.ExternalObject>().Serialize(ref bytes, offset, value.ExternalObject, formatterResolver, context);
             offset += formatterResolver.GetFormatterWithVerify<ConfigurationTest.Pet>().Serialize(ref bytes, offset, value.FavoritePet, formatterResolver, context);
+            offset += formatterResolver.GetFormatterWithVerify<System.Collections.Generic.IList<ConfigurationTest.Person>>().Serialize(ref bytes, offset, value.Dudes, formatterResolver, context);
+            offset += formatterResolver.GetFormatterWithVerify<System.Collections.Generic.Dictionary<System.String, ConfigurationTest.Pet>>().Serialize(ref bytes, offset, value.LabeledPets, formatterResolver, context);
             return offset - startOffset;
         }
 
@@ -821,6 +835,8 @@ namespace ConfigurationTest.Formatters
             var __Numbers__ = default(System.Int32[]);
             var __ExternalObject__ = default(ConfigurationTest.ExternalObject);
             var __FavoritePet__ = default(ConfigurationTest.Pet);
+            var __Dudes__ = default(System.Collections.Generic.IList<ConfigurationTest.Person>);
+            var __LabeledPets__ = default(System.Collections.Generic.Dictionary<System.String, ConfigurationTest.Pet>);
 
             for (int i = 0; i < length - 2; i++)
             {
@@ -849,6 +865,12 @@ namespace ConfigurationTest.Formatters
                     case 6:
                         __FavoritePet__ = formatterResolver.GetFormatterWithVerify<ConfigurationTest.Pet>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         break;
+                    case 7:
+                        __Dudes__ = formatterResolver.GetFormatterWithVerify<System.Collections.Generic.IList<ConfigurationTest.Person>>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        break;
+                    case 8:
+                        __LabeledPets__ = formatterResolver.GetFormatterWithVerify<System.Collections.Generic.Dictionary<System.String, ConfigurationTest.Pet>>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        break;
                     default:
                         readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                         break;
@@ -867,6 +889,8 @@ namespace ConfigurationTest.Formatters
             ____result.Numbers = __Numbers__;
             ____result.ExternalObject = __ExternalObject__;
             ____result.FavoritePet = __FavoritePet__;
+            ____result.Dudes = __Dudes__;
+            ____result.LabeledPets = __LabeledPets__;
 
             context.DeserializedObjects[objectId] = ____result;
 
@@ -932,33 +956,24 @@ namespace ConfigurationTest.Formatters
             }
 
             var actualType = TypeRegistry.Types[writtedTypeId];
-            if (actualType != value.GetType())
+
+            if (writtedTypeId != TypeId)
             {
-                if (!(formatterResolver is IUntypedFormatterResolver))
-                {
-                    throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
-                }
+                var formatter = GetFormatterForActualType(actualType, formatterResolver);
+                var formatterWithPopulate = (IMessagePackUntypedFormatterWithPopulate) formatter;
 
-                var untypedFormatterResolver = formatterResolver as IUntypedFormatterResolver;
-                var formatter = untypedFormatterResolver.GetFormatter(actualType);
+                var valueObject = (object)value;
+                offset = startOffset;
+                formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
+                return;
+            }
 
-                if (value.GetType().IsSubclassOf(actualType))
-                {
-                    if (actualType != typeof(ConfigurationTest.Person))
-                    {
-                        var formatterWithPopulate = formatter as IMessagePackUntypedFormatterWithPopulate;
-                        var valueObject = (object) value;
-                        offset = startOffset;
-                        formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
-                        return;
-                    }
-                }
-                else
-                {
-                    offset = startOffset;
-                    value = (ConfigurationTest.Person) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
-                    return;
-                }
+            if (actualType != value.GetType() && actualType.IsSubclassOf(value.GetType()))
+            {
+                var formatter = GetFormatterForActualType(actualType, formatterResolver);
+                offset = startOffset;
+                value = (ConfigurationTest.Person) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                return;
             }
 
             var objectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
@@ -1051,6 +1066,36 @@ namespace ConfigurationTest.Formatters
                             value.FavoritePet = formatterResolver.GetFormatterWithVerify<ConfigurationTest.Pet>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         }
                         break;
+                    case 7:
+                        var formatterDudes = formatterResolver.GetFormatterWithVerify<System.Collections.Generic.IList<ConfigurationTest.Person>>();
+                        if (value.Dudes != null && formatterDudes is IMessagePackFormatterWithPopulate<System.Collections.Generic.IList<ConfigurationTest.Person>> formatterWithPopulateDudes)
+                        {
+                            var __Dudes__ = value.Dudes;
+                            formatterWithPopulateDudes.Populate(ref __Dudes__, bytes, offset, formatterResolver, out readSize, context);
+                            if (__Dudes__ != value.Dudes) {
+                                value.Dudes = __Dudes__;
+                            }
+                        }
+                        else
+                        {
+                            value.Dudes = formatterResolver.GetFormatterWithVerify<System.Collections.Generic.IList<ConfigurationTest.Person>>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        }
+                        break;
+                    case 8:
+                        var formatterLabeledPets = formatterResolver.GetFormatterWithVerify<System.Collections.Generic.Dictionary<System.String, ConfigurationTest.Pet>>();
+                        if (value.LabeledPets != null && formatterLabeledPets is IMessagePackFormatterWithPopulate<System.Collections.Generic.Dictionary<System.String, ConfigurationTest.Pet>> formatterWithPopulateLabeledPets)
+                        {
+                            var __LabeledPets__ = value.LabeledPets;
+                            formatterWithPopulateLabeledPets.Populate(ref __LabeledPets__, bytes, offset, formatterResolver, out readSize, context);
+                            if (__LabeledPets__ != value.LabeledPets) {
+                                value.LabeledPets = __LabeledPets__;
+                            }
+                        }
+                        else
+                        {
+                            value.LabeledPets = formatterResolver.GetFormatterWithVerify<System.Collections.Generic.Dictionary<System.String, ConfigurationTest.Pet>>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        }
+                        break;
                     default:
                         readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                         break;
@@ -1061,6 +1106,17 @@ namespace ConfigurationTest.Formatters
             context.DeserializedObjects[objectId] = value;
 
             readSize = offset - startOffset;
+        }
+
+        IMessagePackUntypedFormatter GetFormatterForActualType(Type actualType, IFormatterResolver formatterResolver)
+        {
+            if (!(formatterResolver is IUntypedFormatterResolver))
+            {
+                throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
+            }
+
+            var untypedFormatterResolver = (IUntypedFormatterResolver) formatterResolver;
+            return untypedFormatterResolver.GetFormatter(actualType);
         }
 
         void IMessagePackFormatterWithPopulate<object>.Populate(ref object value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
@@ -1296,33 +1352,24 @@ namespace ConfigurationTest.Formatters
             }
 
             var actualType = TypeRegistry.Types[writtedTypeId];
-            if (actualType != value.GetType())
+
+            if (writtedTypeId != TypeId)
             {
-                if (!(formatterResolver is IUntypedFormatterResolver))
-                {
-                    throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
-                }
+                var formatter = GetFormatterForActualType(actualType, formatterResolver);
+                var formatterWithPopulate = (IMessagePackUntypedFormatterWithPopulate) formatter;
 
-                var untypedFormatterResolver = formatterResolver as IUntypedFormatterResolver;
-                var formatter = untypedFormatterResolver.GetFormatter(actualType);
+                var valueObject = (object)value;
+                offset = startOffset;
+                formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
+                return;
+            }
 
-                if (value.GetType().IsSubclassOf(actualType))
-                {
-                    if (actualType != typeof(ConfigurationTest.SuperPet))
-                    {
-                        var formatterWithPopulate = formatter as IMessagePackUntypedFormatterWithPopulate;
-                        var valueObject = (object) value;
-                        offset = startOffset;
-                        formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
-                        return;
-                    }
-                }
-                else
-                {
-                    offset = startOffset;
-                    value = (ConfigurationTest.SuperPet) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
-                    return;
-                }
+            if (actualType != value.GetType() && actualType.IsSubclassOf(value.GetType()))
+            {
+                var formatter = GetFormatterForActualType(actualType, formatterResolver);
+                offset = startOffset;
+                value = (ConfigurationTest.SuperPet) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                return;
             }
 
             var objectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
@@ -1380,6 +1427,17 @@ namespace ConfigurationTest.Formatters
             context.DeserializedObjects[objectId] = value;
 
             readSize = offset - startOffset;
+        }
+
+        IMessagePackUntypedFormatter GetFormatterForActualType(Type actualType, IFormatterResolver formatterResolver)
+        {
+            if (!(formatterResolver is IUntypedFormatterResolver))
+            {
+                throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
+            }
+
+            var untypedFormatterResolver = (IUntypedFormatterResolver) formatterResolver;
+            return untypedFormatterResolver.GetFormatter(actualType);
         }
 
         void IMessagePackFormatterWithPopulate<object>.Populate(ref object value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
@@ -1621,33 +1679,24 @@ namespace ConfigurationTest.Formatters
             }
 
             var actualType = TypeRegistry.Types[writtedTypeId];
-            if (actualType != value.GetType())
+
+            if (writtedTypeId != TypeId)
             {
-                if (!(formatterResolver is IUntypedFormatterResolver))
-                {
-                    throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
-                }
+                var formatter = GetFormatterForActualType(actualType, formatterResolver);
+                var formatterWithPopulate = (IMessagePackUntypedFormatterWithPopulate) formatter;
 
-                var untypedFormatterResolver = formatterResolver as IUntypedFormatterResolver;
-                var formatter = untypedFormatterResolver.GetFormatter(actualType);
+                var valueObject = (object)value;
+                offset = startOffset;
+                formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
+                return;
+            }
 
-                if (value.GetType().IsSubclassOf(actualType))
-                {
-                    if (actualType != typeof(ConfigurationTest.UltimatePet))
-                    {
-                        var formatterWithPopulate = formatter as IMessagePackUntypedFormatterWithPopulate;
-                        var valueObject = (object) value;
-                        offset = startOffset;
-                        formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
-                        return;
-                    }
-                }
-                else
-                {
-                    offset = startOffset;
-                    value = (ConfigurationTest.UltimatePet) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
-                    return;
-                }
+            if (actualType != value.GetType() && actualType.IsSubclassOf(value.GetType()))
+            {
+                var formatter = GetFormatterForActualType(actualType, formatterResolver);
+                offset = startOffset;
+                value = (ConfigurationTest.UltimatePet) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                return;
             }
 
             var objectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
@@ -1720,6 +1769,17 @@ namespace ConfigurationTest.Formatters
             context.DeserializedObjects[objectId] = value;
 
             readSize = offset - startOffset;
+        }
+
+        IMessagePackUntypedFormatter GetFormatterForActualType(Type actualType, IFormatterResolver formatterResolver)
+        {
+            if (!(formatterResolver is IUntypedFormatterResolver))
+            {
+                throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
+            }
+
+            var untypedFormatterResolver = (IUntypedFormatterResolver) formatterResolver;
+            return untypedFormatterResolver.GetFormatter(actualType);
         }
 
         void IMessagePackFormatterWithPopulate<object>.Populate(ref object value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)

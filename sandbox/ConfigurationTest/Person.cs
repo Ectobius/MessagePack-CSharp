@@ -14,6 +14,10 @@ namespace ConfigurationTest
 
         public ExternalObject ExternalObject { get; set; }
 
+        public IList<Person> Dudes { get; set; }
+
+        public Dictionary<string, Pet> LabeledPets { get; set; }
+
         public override string ToString()
         {
             return $"{Name}:{Age}";

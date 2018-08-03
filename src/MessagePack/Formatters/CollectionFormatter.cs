@@ -10,7 +10,7 @@ using System.Collections.Concurrent;
 
 namespace MessagePack.Formatters
 {
-    public sealed class ArrayFormatter<T> : IMessagePackFormatter<T[]>
+    public sealed class ArrayFormatter<T> : IMessagePackFormatterWithPopulate<T[]>
     {
         public int Serialize(ref byte[] bytes, int offset, T[] value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -20,8 +20,9 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var startOffset = offset;
                 var formatter = formatterResolver.GetFormatterWithVerify<T>();
+
+                var startOffset = offset;
 
                 offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
 
@@ -56,6 +57,53 @@ namespace MessagePack.Formatters
                 }
                 readSize = offset - startOffset;
                 return array;
+            }
+        }
+
+        public void Populate(ref T[] value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize,
+            DeserializationContext context)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                value = null;
+                return;
+            }
+            else
+            {
+                var startOffset = offset;
+                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+
+                var valueLength = value.Length;
+                var formatterWithPopulate = formatter as IMessagePackFormatterWithPopulate<T>;
+                if (formatterWithPopulate == null)
+                {
+                    valueLength = 0;
+                }
+
+                if (valueLength < len)
+                {
+                    value = new T[len];
+                }
+
+                for (int i = 0; i < len; i++)
+                {
+                    if (i < valueLength)
+                    {
+                        var item = value[i];
+                        formatterWithPopulate.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
+                    }
+                    else
+                    {
+                        value[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        offset += readSize;
+                    }
+                }
+                readSize = offset - startOffset;
+                return;
             }
         }
     }
@@ -139,7 +187,7 @@ namespace MessagePack.Formatters
     }
 
     // List<T> is popular format, should avoid abstraction.
-    public sealed class ListFormatter<T> : IMessagePackFormatter<List<T>>
+    public sealed class ListFormatter<T> : IMessagePackFormatterWithPopulate<List<T>>
     {
         public int Serialize(ref byte[] bytes, int offset, List<T> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -186,6 +234,46 @@ namespace MessagePack.Formatters
                 }
                 readSize = offset - startOffset;
                 return list;
+            }
+        }
+
+        public void Populate(ref List<T> value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize,
+            DeserializationContext context)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                value = null;
+                return;
+            }
+            else
+            {
+                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                var formatterWithPopulate = formatter as IMessagePackFormatterWithPopulate<T>;
+                if (formatterWithPopulate == null)
+                {
+                    value.Clear();
+                }
+
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                for (int i = 0; i < len; i++)
+                {
+                    if (i >= value.Count)
+                    {
+                        value.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
+                    }
+                    else
+                    {
+                        var item = value[i];
+                        formatterWithPopulate.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
+                    }
+
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
             }
         }
     }
@@ -514,7 +602,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class InterfaceListFormatter<T> : CollectionFormatterBase<T, T[], IList<T>>
+    public sealed class InterfaceListFormatter<T> : CollectionFormatterBase<T, T[], IList<T>>, IMessagePackFormatterWithPopulate<IList<T>>
     {
         protected override void Add(T[] collection, int index, T value)
         {
@@ -529,6 +617,46 @@ namespace MessagePack.Formatters
         protected override IList<T> Complete(T[] intermediateCollection)
         {
             return intermediateCollection;
+        }
+
+        public void Populate(ref IList<T> value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize,
+            DeserializationContext context)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                value = null;
+                return;
+            }
+            else
+            {
+                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                var formatterWithPopulate = formatter as IMessagePackFormatterWithPopulate<T>;
+                if (formatterWithPopulate == null)
+                {
+                    value.Clear();
+                }
+
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                for (int i = 0; i < len; i++)
+                {
+                    if (i >= value.Count)
+                    {
+                        value.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
+                    }
+                    else
+                    {
+                        var item = value[i];
+                        formatterWithPopulate.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
+                    }
+
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+            }
         }
     }
 

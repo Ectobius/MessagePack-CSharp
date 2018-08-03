@@ -123,17 +123,62 @@ namespace MessagePack.Formatters
         }
     }
 
-    public abstract class DictionaryFormatterBase<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary, TDictionary>
+    public abstract class DictionaryFormatterBase<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary, TDictionary>, IMessagePackFormatterWithPopulate<TDictionary>
         where TDictionary : IDictionary<TKey, TValue>
     {
         protected override TDictionary Complete(TDictionary intermediateCollection)
         {
             return intermediateCollection;
         }
+
+        public void Populate(ref TDictionary dictionary, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize,
+            DeserializationContext context)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                dictionary = default(TDictionary);
+            }
+            else
+            {
+                var startOffset = offset;
+                var keyFormatter = formatterResolver.GetFormatterWithVerify<TKey>();
+                var valueFormatter = formatterResolver.GetFormatterWithVerify<TValue>();
+                var valueFormatterWithPopulate = valueFormatter as IMessagePackFormatterWithPopulate<TValue>;
+
+                if (valueFormatterWithPopulate == null)
+                {
+                    dictionary.Clear();
+                }
+
+                var len = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+                offset += readSize;
+
+                for (int i = 0; i < len; i++)
+                {
+                    var key = keyFormatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                    offset += readSize;
+
+                    if (dictionary.ContainsKey(key) && dictionary[key] != null)
+                    {
+                        var existingValue = dictionary[key];
+                        valueFormatterWithPopulate.Populate(ref existingValue, bytes, offset, formatterResolver, out readSize, context);
+                    }
+                    else
+                    {
+                        var valueForKey = valueFormatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        dictionary.Add(key, valueForKey);
+                    }
+
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+            }
+        }
     }
 
 
-    public sealed class DictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, Dictionary<TKey, TValue>.Enumerator, Dictionary<TKey, TValue>>
+    public sealed class DictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>>
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value)
         {
@@ -148,11 +193,6 @@ namespace MessagePack.Formatters
         protected override Dictionary<TKey, TValue> Create(int count)
         {
             return new Dictionary<TKey, TValue>(count);
-        }
-
-        protected override Dictionary<TKey, TValue>.Enumerator GetSourceEnumerator(Dictionary<TKey, TValue> source)
-        {
-            return source.GetEnumerator();
         }
     }
 

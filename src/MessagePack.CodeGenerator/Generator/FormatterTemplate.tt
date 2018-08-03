@@ -341,33 +341,24 @@ namespace <#= Namespace #>
             }
 
             var actualType = TypeRegistry.Types[writtedTypeId];
-            if (actualType != value.GetType())
+
+            if (writtedTypeId != TypeId)
             {
-                if (!(formatterResolver is IUntypedFormatterResolver))
-                {
-                    throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
-                }
+                var formatter = GetFormatterForActualType(actualType, formatterResolver);
+                var formatterWithPopulate = (IMessagePackUntypedFormatterWithPopulate) formatter;
 
-                var untypedFormatterResolver = formatterResolver as IUntypedFormatterResolver;
-                var formatter = untypedFormatterResolver.GetFormatter(actualType);
+                var valueObject = (object)value;
+                offset = startOffset;
+                formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
+                return;
+            }
 
-                if (value.GetType().IsSubclassOf(actualType))
-                {
-                    if (actualType != typeof(<#= objInfo.FullName #>))
-                    {
-                        var formatterWithPopulate = formatter as IMessagePackUntypedFormatterWithPopulate;
-                        var valueObject = (object) value;
-                        offset = startOffset;
-                        formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
-                        return;
-                    }
-                }
-                else
-                {
-                    offset = startOffset;
-                    value = (<#= objInfo.FullName #>) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
-                    return;
-                }
+            if (actualType != value.GetType() && actualType.IsSubclassOf(value.GetType()))
+            {
+                var formatter = GetFormatterForActualType(actualType, formatterResolver);
+                offset = startOffset;
+                value = (<#= objInfo.FullName #>) formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                return;
             }
 
             var objectId = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
@@ -424,6 +415,17 @@ namespace <#= Namespace #>
             context.DeserializedObjects[objectId] = value;
 
             readSize = offset - startOffset;
+        }
+
+        IMessagePackUntypedFormatter GetFormatterForActualType(Type actualType, IFormatterResolver formatterResolver)
+        {
+            if (!(formatterResolver is IUntypedFormatterResolver))
+            {
+                throw new Exception("In order to populate derived types resolver should implement IUntypedFormatterResolver");
+            }
+
+            var untypedFormatterResolver = (IUntypedFormatterResolver) formatterResolver;
+            return untypedFormatterResolver.GetFormatter(actualType);
         }
 
         void IMessagePackFormatterWithPopulate<object>.Populate(ref object value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)

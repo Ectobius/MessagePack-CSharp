@@ -87,7 +87,38 @@
         }
       ],
       "TypeId": 66
+    },
+    "ConfigurationTest.UltimatePet": {
+      "NextValidKey": 5,
+      "Members": [
+        {
+          "Name": "UberPowerName",
+          "TypeFullName": "System.String",
+          "Key": 0
+        },
+        {
+          "Name": "Kind",
+          "TypeFullName": "System.Int32",
+          "Key": 1
+        },
+        {
+          "Name": "Name",
+          "TypeFullName": "System.String",
+          "Key": 2
+        },
+        {
+          "Name": "Power",
+          "TypeFullName": "System.Single",
+          "Key": 3
+        },
+        {
+          "Name": "ExternalObject",
+          "TypeFullName": "ConfigurationTest.ExternalObject",
+          "Key": 4
+        }
+      ],
+      "TypeId": 67
     }
   },
-  "NextValidTypeId": 67
+  "NextValidTypeId": 68
 }

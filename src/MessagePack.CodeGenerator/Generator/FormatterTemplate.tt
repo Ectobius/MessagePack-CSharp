@@ -357,6 +357,7 @@ namespace <#= Namespace #>
                     {
                         var formatterWithPopulate = formatter as IMessagePackUntypedFormatterWithPopulate;
                         var valueObject = (object) value;
+                        offset = startOffset;
                         formatterWithPopulate.Populate(ref valueObject, bytes, offset, formatterResolver, out readSize, context);
                         return;
                     }
@@ -395,7 +396,7 @@ namespace <#= Namespace #>
                         value.<#= x.Name #> = <#= x.GetDeserializeMethodString() #>;
 <# } else { #>
                         var formatter<#= x.Name #> = formatterResolver.GetFormatterWithVerify<<#= x.Type #>>();
-                        if (formatter<#= x.Name #> is IMessagePackFormatterWithPopulate<<#= x.Type #>> formatterWithPopulate<#= x.Name #>)
+                        if (value.<#= x.Name #> != null && formatter<#= x.Name #> is IMessagePackFormatterWithPopulate<<#= x.Type #>> formatterWithPopulate<#= x.Name #>)
                         {
                             var __<#= x.Name #>__ = value.<#= x.Name #>;
                             formatterWithPopulate<#= x.Name #>.Populate(ref __<#= x.Name #>__, bytes, offset, formatterResolver, out readSize, context);
@@ -419,6 +420,8 @@ namespace <#= Namespace #>
 <# } #>
                 offset += readSize;
             }
+
+            context.DeserializedObjects[objectId] = value;
 
             readSize = offset - startOffset;
         }

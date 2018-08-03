@@ -13,7 +13,79 @@ namespace ConfigurationTest
         {
             RegisterResolvers();
 
-            var tima = new Pet {Name = "Tima", Power = 7.9f};
+            TestPopulating();
+        }
+
+        static void TestPopulating()
+        {
+            Console.WriteLine("Test Populating.........");
+
+            var person = CreatePerson();
+
+            var serializationOptions = new SerializationOptions
+            {
+                ExternalReferenceChecker = (obj) => obj.GetType() == typeof(ExternalObject)
+            };
+            var bytes = MessagePackSerializer.Serialize(person, serializationOptions);
+
+            Console.WriteLine(MessagePackSerializer.ToJson(bytes));
+
+            var emptyPerson = new Person();
+            var deserializationOptions = new DeserializationOptions
+            {
+                ExternalObjectsByIds = serializationOptions.ExternalObjectsByIds
+            };
+
+            var ultimateLucky = new UltimatePet { Name = "Ultimate Lucky", Power = 17.9f, Kind = 999, UberPowerName = "Mother Earth" };
+            person.FavoritePet = ultimateLucky;
+            var prevPerson = person;
+            MessagePackSerializer.Populate(ref person, bytes, deserializationOptions);
+
+            Console.WriteLine("Person is the same: {0}", ReferenceEquals(person, prevPerson));
+            Console.WriteLine("Pet is the same: {0}", person.FavoritePet == ultimateLucky);
+        }
+
+        static Person CreatePerson()
+        {
+            var tima = new Pet { Name = "Tima", Power = 7.9f };
+
+            var externalObject = new ExternalObject()
+            {
+                Quality = 7,
+                Values = new Dictionary<string, object>
+                {
+                    {"fideliy", "important"}
+                }
+            };
+
+            var person = new Person
+            {
+                Name = "Alex",
+                Age = 28,
+                Pets = new List<Pet>
+                {
+                    new Pet { Name = "Jack", Power = 11f },
+                    tima,
+                    new SuperPet
+                    {
+                        Name = "Miu",
+                        Power = 99999f,
+                        Kind = 1,
+                        ExternalObject = externalObject
+                    },
+                    tima
+                },
+                FavoritePet = new SuperPet { Name = "Super Lucky", Power = 170.9f, Kind = 67 },
+                Numbers = new[] { 3, 9, 17, 32 },
+                ExternalObject = externalObject
+            };
+
+            return person;
+        }
+
+        static void AllStuff()
+        {
+            var tima = new Pet { Name = "Tima", Power = 7.9f };
 
             var externalObject = new ExternalObject()
             {
@@ -42,7 +114,7 @@ namespace ConfigurationTest
                     tima
                 },
                 FavoritePet = new Pet { Name = "Lucky", Power = 17.9f },
-                Numbers = new [] { 3, 9, 17, 32},
+                Numbers = new[] { 3, 9, 17, 32 },
                 ExternalObject = externalObject
             };
 

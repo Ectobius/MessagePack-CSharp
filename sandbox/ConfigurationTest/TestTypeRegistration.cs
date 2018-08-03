@@ -9,7 +9,8 @@ namespace ConfigurationTest
             Register(
                 typeof(Person),
                 typeof(Pet),
-                typeof(SuperPet)
+                typeof(SuperPet),
+                typeof(UltimatePet)
             );
         }
     }

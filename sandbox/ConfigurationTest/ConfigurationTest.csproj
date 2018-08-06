@@ -42,15 +42,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ExternalObject.cs" />
     <Compile Include="MessagePackGenerated.cs" />
-    <Compile Include="Person.cs" />
-    <Compile Include="Pet.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SuperPet.cs" />
-    <Compile Include="TestTypeRegistration.cs" />
-    <Compile Include="UltimatePet.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -60,6 +54,13 @@
       <Project>{7abb33ee-a2f1-492b-8daf-5df89f0f0b79}</Project>
       <Name>MessagePack</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TestModels\TestModels.csproj">
+      <Project>{e87caa0c-332c-4739-aa7a-1195712cd6e0}</Project>
+      <Name>TestModels</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>$(MSBuildProjectDirectory)\..\..\src\MessagePack.CodeGenerator\bin\Debug\mpc.exe -i "$(MSBuildProjectDirectory)\..\TestModels\bin\Debug\netstandard2.0\TestModels.dll" -o "$(MSBuildProjectDirectory)\MessagePackGenerated.cs" -n "ConfigurationTest" -c "$(MSBuildProjectDirectory)\..\TestModels\SerializationConfig.json"</PreBuildEvent>
+  </PropertyGroup>
 </Project>

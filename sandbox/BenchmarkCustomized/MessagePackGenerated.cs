@@ -3,7 +3,7 @@
 #pragma warning disable 414
 #pragma warning disable 168
 
-namespace ConfigurationTest.Resolvers
+namespace BenchmarkCustomized.Resolvers
 {
     using System;
     using System.Collections.Generic;
@@ -100,19 +100,19 @@ namespace ConfigurationTest.Resolvers
                     formatter = new global::MessagePack.Formatters.DictionaryFormatter<System.String, TestModels.Pet>();
                     break;
                         case 4:
-                    formatter = new ConfigurationTest.Formatters.ExternalObjectFormatter(ModelFactory);
+                    formatter = new BenchmarkCustomized.Formatters.ExternalObjectFormatter(ModelFactory);
                     break;
                         case 5:
-                    formatter = new ConfigurationTest.Formatters.PetFormatter(ModelFactory);
+                    formatter = new BenchmarkCustomized.Formatters.PetFormatter(ModelFactory);
                     break;
                         case 6:
-                    formatter = new ConfigurationTest.Formatters.PersonFormatter(ModelFactory);
+                    formatter = new BenchmarkCustomized.Formatters.PersonFormatter(ModelFactory);
                     break;
                         case 7:
-                    formatter = new ConfigurationTest.Formatters.SuperPetFormatter(ModelFactory);
+                    formatter = new BenchmarkCustomized.Formatters.SuperPetFormatter(ModelFactory);
                     break;
                         case 8:
-                    formatter = new ConfigurationTest.Formatters.UltimatePetFormatter(ModelFactory);
+                    formatter = new BenchmarkCustomized.Formatters.UltimatePetFormatter(ModelFactory);
                     break;
                     default: return null;
             }
@@ -135,7 +135,7 @@ namespace ConfigurationTest.Resolvers
 #pragma warning disable 414
 #pragma warning disable 168
 
-namespace ConfigurationTest.Formatters
+namespace BenchmarkCustomized.Formatters
 {
     using System;
     using System.Collections.Generic;

@@ -1,6 +1,6 @@
 ﻿using MessagePack.Configuration;
 
-namespace ConfigurationTest
+namespace TestModels
 {
     public class TestTypeRegistration : TypeRegistration
     {

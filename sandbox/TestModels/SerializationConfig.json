@@ -1,6 +1,6 @@
 {
   "ModelConfigurations": {
-    "ConfigurationTest.Person": {
+    "TestModels.Person": {
       "NextValidKey": 9,
       "Members": [
         {
@@ -20,7 +20,7 @@
         },
         {
           "Name": "Pets",
-          "TypeFullName": "System.Collections.Generic.List`1[[ConfigurationTest.Pet, ConfigurationTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+          "TypeFullName": "System.Collections.Generic.List`1[[TestModels.Pet, TestModels, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
           "Key": 3
         },
         {
@@ -29,29 +29,29 @@
           "Key": 4
         },
         {
-          "Name": "ExternalObject",
-          "TypeFullName": "ConfigurationTest.ExternalObject",
+          "Name": "FavoritePet",
+          "TypeFullName": "TestModels.Pet",
           "Key": 5
         },
         {
-          "Name": "FavoritePet",
-          "TypeFullName": "ConfigurationTest.Pet",
+          "Name": "ExternalObject",
+          "TypeFullName": "TestModels.ExternalObject",
           "Key": 6
         },
         {
           "Name": "Dudes",
-          "TypeFullName": "System.Collections.Generic.IList`1[[ConfigurationTest.Person, ConfigurationTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+          "TypeFullName": "System.Collections.Generic.IList`1[[TestModels.Person, TestModels, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
           "Key": 7
         },
         {
           "Name": "LabeledPets",
-          "TypeFullName": "System.Collections.Generic.Dictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[ConfigurationTest.Pet, ConfigurationTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+          "TypeFullName": "System.Collections.Generic.Dictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[TestModels.Pet, TestModels, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
           "Key": 8
         }
       ],
       "TypeId": 64
     },
-    "ConfigurationTest.Pet": {
+    "TestModels.Pet": {
       "NextValidKey": 3,
       "Members": [
         {
@@ -66,13 +66,13 @@
         },
         {
           "Name": "ExternalObject",
-          "TypeFullName": "ConfigurationTest.ExternalObject",
+          "TypeFullName": "TestModels.ExternalObject",
           "Key": 2
         }
       ],
       "TypeId": 65
     },
-    "ConfigurationTest.SuperPet": {
+    "TestModels.SuperPet": {
       "NextValidKey": 4,
       "Members": [
         {
@@ -92,13 +92,13 @@
         },
         {
           "Name": "ExternalObject",
-          "TypeFullName": "ConfigurationTest.ExternalObject",
+          "TypeFullName": "TestModels.ExternalObject",
           "Key": 3
         }
       ],
       "TypeId": 66
     },
-    "ConfigurationTest.UltimatePet": {
+    "TestModels.UltimatePet": {
       "NextValidKey": 5,
       "Members": [
         {
@@ -123,7 +123,7 @@
         },
         {
           "Name": "ExternalObject",
-          "TypeFullName": "ConfigurationTest.ExternalObject",
+          "TypeFullName": "TestModels.ExternalObject",
           "Key": 4
         }
       ],

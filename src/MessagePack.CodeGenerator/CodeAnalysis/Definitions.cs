@@ -83,7 +83,8 @@ namespace MessagePack.CodeGenerator
         public bool IsReadable { get; set; }
         public int IntKey { get; set; }
         public string StringKey { get; set; }
-        public string Type { get; set; }
+        public string TypeName { get; set; }
+        public Type Type { get; set; }
         public string Name { get; set; }
         public string ShortTypeName { get; set; }
 
@@ -122,31 +123,31 @@ namespace MessagePack.CodeGenerator
 
         public string GetSerializeMethodString()
         {
-            if (primitiveTypes.Contains(Type))
+            if (primitiveTypes.Contains(TypeName))
             {
                 return $"MessagePackBinary.Write{ShortTypeName.Replace("[]", "s")}(ref bytes, offset, value.{Name})";
             }
             else
             {
-                return $"formatterResolver.GetFormatterWithVerify<{Type}>().Serialize(ref bytes, offset, value.{Name}, formatterResolver, context)";
+                return $"formatterResolver.GetFormatterWithVerify<{TypeName}>().Serialize(ref bytes, offset, value.{Name}, formatterResolver, context)";
             }
         }
 
         public string GetDeserializeMethodString()
         {
-            if (primitiveTypes.Contains(Type))
+            if (primitiveTypes.Contains(TypeName))
             {
                 return $"MessagePackBinary.Read{ShortTypeName.Replace("[]", "s")}(bytes, offset, out readSize)";
             }
             else
             {
-                return $"formatterResolver.GetFormatterWithVerify<{Type}>().Deserialize(bytes, offset, formatterResolver, out readSize, context)";
+                return $"formatterResolver.GetFormatterWithVerify<{TypeName}>().Deserialize(bytes, offset, formatterResolver, out readSize, context)";
             }
         }
 
         public bool IsPrimitive()
         {
-            return primitiveTypes.Contains(Type);
+            return primitiveTypes.Contains(TypeName);
         }
     }
 

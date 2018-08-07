@@ -7,7 +7,8 @@ namespace BenchmarkComparison
     [CoreJob]
     public class MessagePackCustomizedVsOriginal
     {
-        private BenchmarkCustomized.Benchmark _customized = new BenchmarkCustomized.Benchmark();
+        private BenchmarkCustomized.BenchmarkSimpleModel _customizedSimpleModel = new BenchmarkCustomized.BenchmarkSimpleModel();
+        private BenchmarkCustomized.BenchmarkComplexModel _customizedComplexModel = new BenchmarkCustomized.BenchmarkComplexModel();
         private BenchmarkOriginal.Benchmark _original = new BenchmarkOriginal.Benchmark();
         private BenchmarkJsonNet.Benchmark _jsonNet = new BenchmarkJsonNet.Benchmark();
 
@@ -17,9 +18,10 @@ namespace BenchmarkComparison
         [GlobalSetup]
         public void Setup()
         {
-            BenchmarkCustomized.Benchmark.RegisterResolvers();
+            BenchmarkCustomized.Setup.RegisterResolvers();
 
-            _customized.CreateModel(PetsCount);
+            _customizedSimpleModel.Setup(PetsCount);
+            _customizedComplexModel.Setup(PetsCount);
             _original.CreateModel(PetsCount);
             _jsonNet.CreateModel(PetsCount);
         }
@@ -27,11 +29,15 @@ namespace BenchmarkComparison
         [IterationSetup]
         public void IterationSetup()
         {
-            _customized.PrepareOptions();
+            _customizedSimpleModel.IterationSetup();
+            _customizedComplexModel.IterationSetup();
         }
 
         [Benchmark]
-        public void SerializeCustomized() => _customized.SerializeModel();
+        public void SerializeCustomizedSimpleModel() => _customizedSimpleModel.SerializeModel();
+
+        [Benchmark]
+        public void SerializeCustomizedComplexModel() => _customizedComplexModel.SerializeModel();
 
         [Benchmark]
         public void SerializeOriginal() => _original.SerializeModel();
@@ -40,7 +46,13 @@ namespace BenchmarkComparison
         public void SerializeJsonNet() => _jsonNet.SerializeModel();
 
         [Benchmark]
-        public void DeserializeCustomized() => _customized.DeserializeModel();
+        public void DeserializeCustomizedSimpleModel() => _customizedSimpleModel.DeserializeModel();
+
+        [Benchmark]
+        public void PopulateSimpleModel() => _customizedSimpleModel.PopulateModel();
+
+        [Benchmark]
+        public void DeserializeCustomizedComplexModel() => _customizedComplexModel.DeserializeModel();
 
         [Benchmark]
         public void DeserializeOriginal() => _original.DeserializeModel();

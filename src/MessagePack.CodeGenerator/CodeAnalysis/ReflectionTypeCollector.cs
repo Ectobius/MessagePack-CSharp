@@ -372,7 +372,8 @@ namespace MessagePack.CodeGenerator
             {
                 IntKey = memberConfiguration.Key,
                 Name = memberInfo.Name,
-                Type = TypeNameFormatter.GetTypeFullName(memberType),
+                TypeName = TypeNameFormatter.GetTypeFullName(memberType),
+                Type = memberType,
                 ShortTypeName = memberType.Name,
                 IsProperty = memberInfo.MemberType == MemberTypes.Property,
                 IsField = memberInfo.MemberType == MemberTypes.Field

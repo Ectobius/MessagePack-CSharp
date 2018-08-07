@@ -215,7 +215,7 @@ namespace <#= Namespace #>
             offset += readSize;
 
 <# foreach(var x in objInfo.Members) { #>
-            var __<#= x.Name #>__ = default(<#= x.Type #>);
+            var __<#= x.Name #>__ = default(<#= x.TypeName #>);
 <# } #>
 
             for (int i = 0; i < length - 2; i++)
@@ -385,9 +385,11 @@ namespace <#= Namespace #>
                     case <#= x.IntKey #>:
 <# if (x.IsPrimitive()) { #>
                         value.<#= x.Name #> = <#= x.GetDeserializeMethodString() #>;
+<# } else if (MessagePack.Resolvers.BuiltinResolver.TypeHasBuiltinFormatter(x.Type)) { #>
+                        value.<#= x.Name #> = <#= x.GetDeserializeMethodString() #>;
 <# } else { #>
-                        var formatter<#= x.Name #> = formatterResolver.GetFormatterWithVerify<<#= x.Type #>>();
-                        if (value.<#= x.Name #> != null && formatter<#= x.Name #> is IMessagePackFormatterWithPopulate<<#= x.Type #>> formatterWithPopulate<#= x.Name #>)
+                        var formatter<#= x.Name #> = formatterResolver.GetFormatterWithVerify<<#= x.TypeName #>>();
+                        if (value.<#= x.Name #> != null && formatter<#= x.Name #> is IMessagePackFormatterWithPopulate<<#= x.TypeName #>> formatterWithPopulate<#= x.Name #>)
                         {
                             var __<#= x.Name #>__ = value.<#= x.Name #>;
                             formatterWithPopulate<#= x.Name #>.Populate(ref __<#= x.Name #>__, bytes, offset, formatterResolver, out readSize, context);

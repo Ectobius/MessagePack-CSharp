@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="$(MSBuildProjectDirectory)\..\..\src\MessagePack.CodeGenerator\bin\Debug\mpc.exe -i &quot;$(MSBuildProjectDirectory)\..\TestModels\bin\Debug\netstandard2.0\TestModels.dll&quot; -o &quot;$(MSBuildProjectDirectory)\MessagePackGenerated.cs&quot; -n &quot;BenchmarkCustomized&quot; -c &quot;$(MSBuildProjectDirectory)\..\TestModels\SerializationConfig.json&quot;" />
+    <Exec Command="$(MSBuildProjectDirectory)\..\..\src\MessagePack.CodeGenerator\bin\Debug\mpc.exe -i &quot;$(MSBuildProjectDirectory)\..\TestModels\bin\Release\netstandard2.0\TestModels.dll&quot; -o &quot;$(MSBuildProjectDirectory)\MessagePackGenerated.cs&quot; -n &quot;BenchmarkCustomized&quot; -c &quot;$(MSBuildProjectDirectory)\..\TestModels\SerializationConfig.json&quot;" />
   </Target>
 
 </Project>

@@ -499,7 +499,7 @@ namespace MessagePack.CodeGenerator
                         IsProperty = true,
                         IsField = false,
                         Name = item.Name,
-                        Type = item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        TypeName = item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                         ShortTypeName = item.Type.ToDisplayString(binaryWriteFormat)
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
@@ -521,7 +521,7 @@ namespace MessagePack.CodeGenerator
                         IsProperty = false,
                         IsField = true,
                         Name = item.Name,
-                        Type = item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        TypeName = item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                         ShortTypeName = item.Type.ToDisplayString(binaryWriteFormat)
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
@@ -547,7 +547,7 @@ namespace MessagePack.CodeGenerator
                         IsProperty = true,
                         IsField = false,
                         Name = item.Name,
-                        Type = item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        TypeName = item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                         ShortTypeName = item.Type.ToDisplayString(binaryWriteFormat)
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
@@ -603,7 +603,7 @@ namespace MessagePack.CodeGenerator
                         IsProperty = true,
                         IsField = false,
                         Name = item.Name,
-                        Type = item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        TypeName = item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                         ShortTypeName = item.Type.ToDisplayString(binaryWriteFormat)
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
@@ -682,7 +682,7 @@ namespace MessagePack.CodeGenerator
                         {
                             if (intMemebrs.TryGetValue(ctorParamIndex, out paramMember))
                             {
-                                if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.Type && paramMember.IsReadable)
+                                if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.TypeName && paramMember.IsReadable)
                                 {
                                     constructorParameters.Add(paramMember);
                                 }
@@ -732,7 +732,7 @@ namespace MessagePack.CodeGenerator
                                 }
 
                                 paramMember = hasKey.First().Value;
-                                if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.Type && paramMember.IsReadable)
+                                if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.TypeName && paramMember.IsReadable)
                                 {
                                     constructorParameters.Add(paramMember);
                                 }

@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using BuiltinResolverGetFormatterHelper = MessagePack.Internal.BuiltinResolverGetFormatterHelper;
 
 namespace MessagePack.Resolvers
 {
@@ -21,6 +22,11 @@ namespace MessagePack.Resolvers
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
             return FormatterCache<T>.formatter;
+        }
+
+        public static bool TypeHasBuiltinFormatter(Type type)
+        {
+            return BuiltinResolverGetFormatterHelper.HasFormatterForType(type);
         }
 
         static class FormatterCache<T>
@@ -146,6 +152,11 @@ namespace MessagePack.Internal
             }
 
             return null;
+        }
+
+        internal static bool HasFormatterForType(Type type)
+        {
+            return formatterMap.ContainsKey(type);
         }
     }
 }

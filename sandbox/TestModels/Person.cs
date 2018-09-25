@@ -18,6 +18,8 @@ namespace TestModels
 
         public Dictionary<string, Pet> LabeledPets { get; set; }
 
+        public int NumberField;
+
         public override string ToString()
         {
             return $"{Name}:{Age}";

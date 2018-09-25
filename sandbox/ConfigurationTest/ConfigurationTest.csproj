@@ -61,6 +61,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>$(MSBuildProjectDirectory)\..\..\src\MessagePack.CodeGenerator\bin\Debug\mpc.exe -i "$(MSBuildProjectDirectory)\..\TestModels\bin\Debug\netstandard2.0\TestModels.dll" -o "$(MSBuildProjectDirectory)\MessagePackGenerated.cs" -n "ConfigurationTest" -c "$(MSBuildProjectDirectory)\..\TestModels\SerializationConfig.json"</PreBuildEvent>
+    <PreBuildEvent>$(MSBuildProjectDirectory)\..\..\src\MessagePack.CodeGenerator\bin\Debug\mpc.exe -a "$(MSBuildProjectDirectory)\..\TestModels\bin\Debug\netstandard2.0\TestModels.dll" -o "$(MSBuildProjectDirectory)\MessagePackGenerated.cs" -n "ConfigurationTest" -c "$(MSBuildProjectDirectory)\..\TestModels\SerializationConfig.json"</PreBuildEvent>
   </PropertyGroup>
 </Project>

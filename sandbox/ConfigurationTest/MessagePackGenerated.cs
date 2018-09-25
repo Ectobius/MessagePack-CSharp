@@ -638,19 +638,7 @@ namespace ConfigurationTest.Formatters
                 switch (key)
                 {
                     case 0:
-                        var formatterName = formatterResolver.GetFormatterWithVerify<System.String>();
-                        if (value.Name != null && formatterName is IMessagePackFormatterWithPopulate<System.String> formatterWithPopulateName)
-                        {
-                            var __Name__ = value.Name;
-                            formatterWithPopulateName.Populate(ref __Name__, bytes, offset, formatterResolver, out readSize, context);
-                            if (__Name__ != value.Name) {
-                                value.Name = __Name__;
-                            }
-                        }
-                        else
-                        {
-                            value.Name = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
-                        }
+                        value.Name = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         break;
                     case 1:
                         value.Power = MessagePackBinary.ReadSingle(bytes, offset, out readSize);
@@ -751,7 +739,7 @@ namespace ConfigurationTest.Formatters
             int objectId = context.PutToSerialized(value);
 
 
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 11);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 13);
 
             offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, TypeId);
             offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, objectId);
@@ -765,6 +753,8 @@ namespace ConfigurationTest.Formatters
             offset += formatterResolver.GetFormatterWithVerify<TestModels.ExternalObject>().Serialize(ref bytes, offset, value.ExternalObject, formatterResolver, context);
             offset += formatterResolver.GetFormatterWithVerify<System.Collections.Generic.IList<TestModels.Person>>().Serialize(ref bytes, offset, value.Dudes, formatterResolver, context);
             offset += formatterResolver.GetFormatterWithVerify<System.Collections.Generic.Dictionary<System.String, TestModels.Pet>>().Serialize(ref bytes, offset, value.LabeledPets, formatterResolver, context);
+            offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.NumberField);
             return offset - startOffset;
         }
 
@@ -837,6 +827,7 @@ namespace ConfigurationTest.Formatters
             var __ExternalObject__ = default(TestModels.ExternalObject);
             var __Dudes__ = default(System.Collections.Generic.IList<TestModels.Person>);
             var __LabeledPets__ = default(System.Collections.Generic.Dictionary<System.String, TestModels.Pet>);
+            var __NumberField__ = default(System.Int32);
 
             for (int i = 0; i < length - 2; i++)
             {
@@ -871,6 +862,9 @@ namespace ConfigurationTest.Formatters
                     case 8:
                         __LabeledPets__ = formatterResolver.GetFormatterWithVerify<System.Collections.Generic.Dictionary<System.String, TestModels.Pet>>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         break;
+                    case 10:
+                        __NumberField__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
                     default:
                         readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                         break;
@@ -891,6 +885,7 @@ namespace ConfigurationTest.Formatters
             ____result.ExternalObject = __ExternalObject__;
             ____result.Dudes = __Dudes__;
             ____result.LabeledPets = __LabeledPets__;
+            ____result.NumberField = __NumberField__;
 
             context.DeserializedObjects[objectId] = ____result;
 
@@ -986,19 +981,7 @@ namespace ConfigurationTest.Formatters
                 switch (key)
                 {
                     case 0:
-                        var formatterName = formatterResolver.GetFormatterWithVerify<System.String>();
-                        if (value.Name != null && formatterName is IMessagePackFormatterWithPopulate<System.String> formatterWithPopulateName)
-                        {
-                            var __Name__ = value.Name;
-                            formatterWithPopulateName.Populate(ref __Name__, bytes, offset, formatterResolver, out readSize, context);
-                            if (__Name__ != value.Name) {
-                                value.Name = __Name__;
-                            }
-                        }
-                        else
-                        {
-                            value.Name = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
-                        }
+                        value.Name = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         break;
                     case 1:
                         value.Age = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
@@ -1022,19 +1005,7 @@ namespace ConfigurationTest.Formatters
                         }
                         break;
                     case 4:
-                        var formatterNumbers = formatterResolver.GetFormatterWithVerify<System.Int32[]>();
-                        if (value.Numbers != null && formatterNumbers is IMessagePackFormatterWithPopulate<System.Int32[]> formatterWithPopulateNumbers)
-                        {
-                            var __Numbers__ = value.Numbers;
-                            formatterWithPopulateNumbers.Populate(ref __Numbers__, bytes, offset, formatterResolver, out readSize, context);
-                            if (__Numbers__ != value.Numbers) {
-                                value.Numbers = __Numbers__;
-                            }
-                        }
-                        else
-                        {
-                            value.Numbers = formatterResolver.GetFormatterWithVerify<System.Int32[]>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
-                        }
+                        value.Numbers = formatterResolver.GetFormatterWithVerify<System.Int32[]>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         break;
                     case 5:
                         var formatterFavoritePet = formatterResolver.GetFormatterWithVerify<TestModels.Pet>();
@@ -1095,6 +1066,9 @@ namespace ConfigurationTest.Formatters
                         {
                             value.LabeledPets = formatterResolver.GetFormatterWithVerify<System.Collections.Generic.Dictionary<System.String, TestModels.Pet>>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         }
+                        break;
+                    case 10:
+                        value.NumberField = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
                         break;
                     default:
                         readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
@@ -1385,19 +1359,7 @@ namespace ConfigurationTest.Formatters
                         value.Kind = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
                         break;
                     case 1:
-                        var formatterName = formatterResolver.GetFormatterWithVerify<System.String>();
-                        if (value.Name != null && formatterName is IMessagePackFormatterWithPopulate<System.String> formatterWithPopulateName)
-                        {
-                            var __Name__ = value.Name;
-                            formatterWithPopulateName.Populate(ref __Name__, bytes, offset, formatterResolver, out readSize, context);
-                            if (__Name__ != value.Name) {
-                                value.Name = __Name__;
-                            }
-                        }
-                        else
-                        {
-                            value.Name = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
-                        }
+                        value.Name = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         break;
                     case 2:
                         value.Power = MessagePackBinary.ReadSingle(bytes, offset, out readSize);
@@ -1709,37 +1671,13 @@ namespace ConfigurationTest.Formatters
                 switch (key)
                 {
                     case 0:
-                        var formatterUberPowerName = formatterResolver.GetFormatterWithVerify<System.String>();
-                        if (value.UberPowerName != null && formatterUberPowerName is IMessagePackFormatterWithPopulate<System.String> formatterWithPopulateUberPowerName)
-                        {
-                            var __UberPowerName__ = value.UberPowerName;
-                            formatterWithPopulateUberPowerName.Populate(ref __UberPowerName__, bytes, offset, formatterResolver, out readSize, context);
-                            if (__UberPowerName__ != value.UberPowerName) {
-                                value.UberPowerName = __UberPowerName__;
-                            }
-                        }
-                        else
-                        {
-                            value.UberPowerName = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
-                        }
+                        value.UberPowerName = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         break;
                     case 1:
                         value.Kind = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
                         break;
                     case 2:
-                        var formatterName = formatterResolver.GetFormatterWithVerify<System.String>();
-                        if (value.Name != null && formatterName is IMessagePackFormatterWithPopulate<System.String> formatterWithPopulateName)
-                        {
-                            var __Name__ = value.Name;
-                            formatterWithPopulateName.Populate(ref __Name__, bytes, offset, formatterResolver, out readSize, context);
-                            if (__Name__ != value.Name) {
-                                value.Name = __Name__;
-                            }
-                        }
-                        else
-                        {
-                            value.Name = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
-                        }
+                        value.Name = formatterResolver.GetFormatterWithVerify<System.String>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         break;
                     case 3:
                         value.Power = MessagePackBinary.ReadSingle(bytes, offset, out readSize);

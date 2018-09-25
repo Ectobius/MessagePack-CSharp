@@ -1,7 +1,7 @@
 {
   "ModelConfigurations": {
     "TestModels.Person": {
-      "NextValidKey": 9,
+      "NextValidKey": 12,
       "Members": [
         {
           "Name": "Name",
@@ -47,6 +47,11 @@
           "Name": "LabeledPets",
           "TypeFullName": "System.Collections.Generic.Dictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[TestModels.Pet, TestModels, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
           "Key": 8
+        },
+        {
+          "Name": "NumberField",
+          "TypeFullName": "System.Int32",
+          "Key": 10
         }
       ],
       "TypeId": 64

@@ -15,7 +15,7 @@ namespace MessagePack.CodeGenerator
 {
     public class ReflectionTypeCollector
     {
-        private readonly string _assemblyFilePath;
+        private readonly List<string> _assemblyPaths;
         private readonly string _configFilePath;
 
         private HashSet<Type> _collectedTypes = new HashSet<Type>();
@@ -26,20 +26,17 @@ namespace MessagePack.CodeGenerator
         private Dictionary<Type, ModelTypeConfiguration> _registeredTypeConfigs = new Dictionary<Type, ModelTypeConfiguration>();
 
 
-        public ReflectionTypeCollector(string assemblyFilePath, string configFilePath)
+        public ReflectionTypeCollector(List<string> assemblyPaths, string configFilePath)
         {
-            _assemblyFilePath = assemblyFilePath;
+            _assemblyPaths = assemblyPaths;
             _configFilePath = configFilePath;
         }
 
         public CollectedInfo Collect()
         {
-            var assembly = Assembly.UnsafeLoadFrom(_assemblyFilePath);
+            var types = GetRegisteredTypes();
 
-            var typeRegistrationType = assembly.DefinedTypes.Single(ti => ti.BaseType == typeof(TypeRegistration));
-            var typeRegistration = (TypeRegistration) Activator.CreateInstance(typeRegistrationType);
-
-            ReadAndUpdateConfiguration(typeRegistration);
+            ReadAndUpdateConfiguration(types);
 
             foreach (var type in _registeredTypeConfigs.Keys)
             {
@@ -55,11 +52,28 @@ namespace MessagePack.CodeGenerator
             };
         }
 
-        private void ReadAndUpdateConfiguration(TypeRegistration typeRegistration)
+        private List<Type> GetRegisteredTypes()
+        {
+            var types = new List<Type>();
+
+            foreach (var path in _assemblyPaths)
+            {
+                var assembly = Assembly.UnsafeLoadFrom(path);
+
+                var typeRegistrationType = assembly.DefinedTypes.Single(ti => ti.BaseType == typeof(TypeRegistration));
+                var typeRegistration = (TypeRegistration)Activator.CreateInstance(typeRegistrationType);
+
+                types.AddRange(typeRegistration.Types);
+            }
+
+            return types;
+        }
+
+        private void ReadAndUpdateConfiguration(List<Type> registeredTypes)
         {
             var config = ReadConfiguration();
 
-            foreach (var type in typeRegistration.Types)
+            foreach (var type in registeredTypes)
             {
                 ModelTypeConfiguration modelTypeConfiguration;
                 if (config.ModelConfigurations.ContainsKey(type.FullName))

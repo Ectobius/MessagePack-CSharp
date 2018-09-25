@@ -18,6 +18,7 @@ namespace MessagePack.CodeGenerator
         public string ResolverName { get; private set; }
         public string NamespaceRoot { get; private set; }
         public bool IsUseMap { get; private set; }
+        public List<string> AssemblyPaths { get; set; }
 
         public bool IsParsed { get; set; }
 
@@ -27,16 +28,18 @@ namespace MessagePack.CodeGenerator
             NamespaceRoot = "MessagePack";
             ResolverName = "GeneratedResolver";
             IsUseMap = false;
+            AssemblyPaths = new List<string>();
 
             var option = new OptionSet()
             {
-                { "i|input=", "[required]Input path of analyze csproj", x => { InputPath = x; } },
+                { "i|input=", "[optional, default=empty]Input path of analyze csproj", x => { InputPath = x; } },
                 { "o|output=", "[required]Output file path", x => { OutputPath = x; } },
                 { "c|config=", "[required]Model configuration file", x => { ConfigurationPath = x; } },
                 { "s|conditionalsymbol=", "[optional, default=empty]conditional compiler symbol", x => { ConditionalSymbols.AddRange(x.Split(',')); } },
                 { "r|resolvername=", "[optional, default=GeneratedResolver]Set resolver name", x => { ResolverName = x; } },
                 { "n|namespace=", "[optional, default=MessagePack]Set namespace root name", x => { NamespaceRoot = x; } },
                 { "m|usemapmode", "[optional, default=false]Force use map mode serialization", x => { IsUseMap = true; } },
+                { "a|assemblies=", "[required]Input assemblies", x => { AssemblyPaths.AddRange(x.Split(',')); } },
             };
             if (args.Length == 0)
             {
@@ -46,7 +49,7 @@ namespace MessagePack.CodeGenerator
             {
                 option.Parse(args);
 
-                if (InputPath == null || OutputPath == null)
+                if (AssemblyPaths.Count == 0 || OutputPath == null)
                 {
                     Console.WriteLine("Invalid Argument:" + string.Join(" ", args));
                     Console.WriteLine();
@@ -156,30 +159,11 @@ namespace MessagePack.CodeGenerator
             Console.WriteLine("String Generation Complete:" + stopwatch.Elapsed.ToString());
         }
 
-        private static CollectedInfo CollectUsingRoslyn(CommandlineArguments cmdArgs)
-        {
-            Console.WriteLine("Project Compilation Start:" + cmdArgs.InputPath);
-
-            var collector = new RoslynTypeCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true, cmdArgs.IsUseMap);
-
-            Console.WriteLine("Project Compilation Complete:" + stopwatch.Elapsed.ToString());
-            Console.WriteLine();
-
-            stopwatch.Restart();
-            Console.WriteLine("Method Collect Start");
-
-            var infos = collector.Collect();
-
-            Console.WriteLine("Method Collect Complete:" + stopwatch.Elapsed.ToString());
-
-            return infos;
-        }
-
         private static CollectedInfo CollectUsingReflection(CommandlineArguments cmdArgs)
         {
             Console.WriteLine("Loading assembly: {0}", cmdArgs.InputPath);
 
-            var collector = new ReflectionTypeCollector(cmdArgs.InputPath, cmdArgs.ConfigurationPath);
+            var collector = new ReflectionTypeCollector(cmdArgs.AssemblyPaths, cmdArgs.ConfigurationPath);
 
             var infos = collector.Collect();
 

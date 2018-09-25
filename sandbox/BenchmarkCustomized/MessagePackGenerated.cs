@@ -739,7 +739,7 @@ namespace BenchmarkCustomized.Formatters
             int objectId = context.PutToSerialized(value);
 
 
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 11);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 13);
 
             offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, TypeId);
             offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, objectId);
@@ -753,6 +753,8 @@ namespace BenchmarkCustomized.Formatters
             offset += formatterResolver.GetFormatterWithVerify<TestModels.ExternalObject>().Serialize(ref bytes, offset, value.ExternalObject, formatterResolver, context);
             offset += formatterResolver.GetFormatterWithVerify<System.Collections.Generic.IList<TestModels.Person>>().Serialize(ref bytes, offset, value.Dudes, formatterResolver, context);
             offset += formatterResolver.GetFormatterWithVerify<System.Collections.Generic.Dictionary<System.String, TestModels.Pet>>().Serialize(ref bytes, offset, value.LabeledPets, formatterResolver, context);
+            offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.NumberField);
             return offset - startOffset;
         }
 
@@ -825,6 +827,7 @@ namespace BenchmarkCustomized.Formatters
             var __ExternalObject__ = default(TestModels.ExternalObject);
             var __Dudes__ = default(System.Collections.Generic.IList<TestModels.Person>);
             var __LabeledPets__ = default(System.Collections.Generic.Dictionary<System.String, TestModels.Pet>);
+            var __NumberField__ = default(System.Int32);
 
             for (int i = 0; i < length - 2; i++)
             {
@@ -859,6 +862,9 @@ namespace BenchmarkCustomized.Formatters
                     case 8:
                         __LabeledPets__ = formatterResolver.GetFormatterWithVerify<System.Collections.Generic.Dictionary<System.String, TestModels.Pet>>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         break;
+                    case 10:
+                        __NumberField__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
                     default:
                         readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                         break;
@@ -879,6 +885,7 @@ namespace BenchmarkCustomized.Formatters
             ____result.ExternalObject = __ExternalObject__;
             ____result.Dudes = __Dudes__;
             ____result.LabeledPets = __LabeledPets__;
+            ____result.NumberField = __NumberField__;
 
             context.DeserializedObjects[objectId] = ____result;
 
@@ -1059,6 +1066,9 @@ namespace BenchmarkCustomized.Formatters
                         {
                             value.LabeledPets = formatterResolver.GetFormatterWithVerify<System.Collections.Generic.Dictionary<System.String, TestModels.Pet>>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         }
+                        break;
+                    case 10:
+                        value.NumberField = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
                         break;
                     default:
                         readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);

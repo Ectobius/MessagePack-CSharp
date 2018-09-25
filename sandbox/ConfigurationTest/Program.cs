@@ -51,6 +51,8 @@ namespace ConfigurationTest
 
             person.LabeledPets["fieldy"].Name = "Some another pet";
             person.LabeledPets.Remove("green");
+
+            person.NumberField = 42;
                 
             var prevPerson = person;
             MessagePackSerializer.Populate(ref person, bytes, deserializationOptions);
@@ -61,6 +63,8 @@ namespace ConfigurationTest
             Console.WriteLine("Favorite pet is reused: {0}", person.FavoritePet == ultimateLucky);
 
             Console.WriteLine("Pets count: {0}", person.Pets.Count);
+
+            Console.WriteLine("Person.NumberField: {0}", person.NumberField);
         }
 
         static Person CreatePerson()
@@ -105,7 +109,8 @@ namespace ConfigurationTest
                 {
                     { "green", tima },
                     { "fieldy", new Pet { Name = "Mike", Power =  9.1f } }
-                }
+                },
+                NumberField = 10
             };
 
             return person;

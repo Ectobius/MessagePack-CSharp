@@ -7,5 +7,7 @@ namespace MessagePack
     public class DeserializationOptions
     {
         public Dictionary<int, object> ExternalObjectsByIds { get; set; }
+
+        public object ExtraData { get; set; }
     }
 }

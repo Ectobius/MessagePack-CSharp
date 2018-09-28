@@ -560,19 +560,5 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ValueTaskFormatter<T> : IMessagePackFormatter<ValueTask<T>>
-    {
-        public int Serialize(ref byte[] bytes, int offset, ValueTask<T> value, IFormatterResolver formatterResolver, SerializationContext context)
-        {
-            return formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Result, formatterResolver, context);
-        }
-
-        public ValueTask<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
-        {
-            var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
-            return new ValueTask<T>(v);
-        }
-    }
-
 #endif
 }

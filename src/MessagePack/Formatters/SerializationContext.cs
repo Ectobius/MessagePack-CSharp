@@ -25,6 +25,8 @@ namespace MessagePack.Formatters
         public Dictionary<int, object> ExternalObjectsByIds { get; set; }
         public Dictionary<object, int> ExternalObjects { get; } = new Dictionary<object, int>();
 
+        public object ExtraData { get; set; }
+
         public int GetNextValidId()
         {
             return _nextValidId++;

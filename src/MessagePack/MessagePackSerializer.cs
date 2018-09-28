@@ -170,6 +170,7 @@ namespace MessagePack
             {
                 context.ExternalReferenceChecker = options.ExternalReferenceChecker;
                 context.ExternalObjectsByIds = options.ExternalObjectsByIds;
+                context.ExtraData = options.ExtraData;
             }
 
             return formatter.Serialize(ref buffer, offset, value, resolver, context);
@@ -325,6 +326,7 @@ namespace MessagePack
             if (options != null)
             {
                 context.ExternalObjectsByIds = options.ExternalObjectsByIds;
+                context.ExtraData = options.ExtraData;
             }
 
             return formatter.Deserialize(bytes, offset, resolver, out readSize, context);

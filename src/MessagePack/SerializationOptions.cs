@@ -8,5 +8,7 @@ namespace MessagePack
     {
         public Func<object, bool> ExternalReferenceChecker { get; set; }
         public Dictionary<int, object> ExternalObjectsByIds { get; } = new Dictionary<int, object>();
+
+        public object ExtraData { get; set; }
     }
 }

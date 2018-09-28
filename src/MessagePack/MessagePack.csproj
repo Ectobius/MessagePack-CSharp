@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0</TargetFrameworks>
         <AssemblyName>MessagePackCustomized</AssemblyName>
         <SignAssembly>True</SignAssembly>
         <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
@@ -10,7 +10,7 @@
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU' AND '$(TargetFramework)' != 'net45'">
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DefineConstants>TRACE;DEBUG;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
+        <DefineConstants>TRACE;DEBUG</DefineConstants>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
         <LangVersion>7</LangVersion>
     </PropertyGroup>
@@ -40,24 +40,17 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Remove="LZ4\**" />
+        <EmbeddedResource Remove="LZ4\**" />
         <None Remove="*.meta" />
+        <None Remove="LZ4\**" />
         <None Remove="Resolvers\*.meta" />
         <None Remove="Internal\*.meta" />
         <None Remove="Formatters\*.meta" />
-        <None Remove="LZ4\Codec\*.meta" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="LZ4\Codec\LZ4Codec.Safe.cs" />
         <None Include="MessagePackSerializer.Typeless.cs" />
-    </ItemGroup>
-
-    <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard1.6' ">
-        <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
-        <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
-        <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
-        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.3.0" />
-        <PackageReference Include="System.ValueTuple" Version="4.3.0" />
     </ItemGroup>
 
     <ItemGroup Condition=" '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net47' ">

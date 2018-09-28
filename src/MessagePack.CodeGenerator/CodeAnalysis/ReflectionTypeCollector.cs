@@ -242,7 +242,7 @@ namespace MessagePack.CodeGenerator
             var info = new ObjectSerializationInfo
             {
                 Name = type.Name,
-                FullName = type.FullName,
+                FullName = TypeNameFormatter.GetTypeFullName(type),
                 ConstructorParameters = new MemberSerializationInfo[0],
                 HasIMessagePackSerializationCallbackReceiver = false,
                 IsClass = type.IsClass,

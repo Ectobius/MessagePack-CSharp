@@ -89,6 +89,7 @@ namespace MessagePack.CodeGenerator
 
             stopwatch = Stopwatch.StartNew();
 
+            //Debugger.Launch();
             var collectedInfo = CollectUsingReflection(cmdArgs);
 
             Console.WriteLine("Output Generation Start");

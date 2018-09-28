@@ -10,12 +10,13 @@ namespace MessagePack.CodeGenerator.Utils
     {
         public static string GetTypeFullName(Type type)
         {
+            string fullName = type.FullName;
             if (type.IsGenericType)
             {
-                return GetGenericTypeFullName(type);
+                fullName = GetGenericTypeFullName(type);
             }
 
-            return type.FullName;
+            return fullName.Replace('+', '.');
         }
 
         public static string GetGenericTypeFullName(Type type)

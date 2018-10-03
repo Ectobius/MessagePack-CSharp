@@ -340,6 +340,7 @@ namespace MessagePack
             if (options != null)
             {
                 context.ExternalObjectsByIds = options.ExternalObjectsByIds;
+                context.ExtraData = options.ExtraData;
             }
 
             if (formatter is IMessagePackFormatterWithPopulate<T> formatterWithPopulate)

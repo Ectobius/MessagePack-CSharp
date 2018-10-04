@@ -164,7 +164,7 @@ namespace MessagePack
         private static int SerializeByFormatter<T>(IMessagePackFormatter<T> formatter, ref byte[] buffer, int offset,
             T value, IFormatterResolver resolver, SerializationOptions options)
         {
-            var context = new SerializationContext();
+            var context = InternalContextPool.GetSerializationContext();
 
             if (options != null)
             {
@@ -321,7 +321,7 @@ namespace MessagePack
         private static T DeserializeByFormatter<T>(IMessagePackFormatter<T> formatter, byte[] bytes, int offset, IFormatterResolver resolver,
             out int readSize, DeserializationOptions options)
         {
-            var context = new DeserializationContext();
+            var context = InternalContextPool.GetDeserializationContext();
 
             if (options != null)
             {
@@ -335,7 +335,7 @@ namespace MessagePack
         private static void PopulateByFormatter<T>(ref T value, IMessagePackFormatter<T> formatter, byte[] bytes, int offset, IFormatterResolver resolver,
             out int readSize, DeserializationOptions options)
         {
-            var context = new DeserializationContext();
+            var context = InternalContextPool.GetDeserializationContext();
 
             if (options != null)
             {
@@ -385,6 +385,40 @@ namespace MessagePack.Internal
                 buffer = new byte[65536];
             }
             return buffer;
+        }
+    }
+
+    internal static class InternalContextPool
+    {
+        [ThreadStatic]
+        static SerializationContext _serializationContext;
+
+        [ThreadStatic]
+        static DeserializationContext _deserializationContext;
+
+        public static SerializationContext GetSerializationContext()
+        {
+            if (_serializationContext == null)
+            {
+                _serializationContext = new SerializationContext();
+            }
+
+            _serializationContext.SerializedObjects.Clear();
+            _serializationContext.ExternalObjects.Clear();
+
+            return _serializationContext;
+        }
+
+        public static DeserializationContext GetDeserializationContext()
+        {
+            if (_deserializationContext == null)
+            {
+                _deserializationContext = new DeserializationContext();
+            }
+
+            _deserializationContext.DeserializedObjects.Clear();
+
+            return _deserializationContext;
         }
     }
 }

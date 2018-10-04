@@ -20,7 +20,7 @@ namespace MessagePack.Formatters
             ExternalReferenceChecker = options.ExternalReferenceChecker;
         }
 
-        public Dictionary<object, int> SerializedObjects { get; } = new Dictionary<object, int>();
+        public Dictionary<object, int> SerializedObjects { get; } = new Dictionary<object, int>(1000);
         public Func<object, bool> ExternalReferenceChecker { get; set; }
         public Dictionary<int, object> ExternalObjectsByIds { get; set; }
         public Dictionary<object, int> ExternalObjects { get; } = new Dictionary<object, int>();

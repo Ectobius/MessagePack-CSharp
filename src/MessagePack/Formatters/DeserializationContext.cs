@@ -10,5 +10,10 @@ namespace MessagePack.Formatters
         public Dictionary<int, object> ExternalObjectsByIds { get; set; }
 
         public object ExtraData { get; set; }
+
+        public void Reset()
+        {
+            DeserializedObjects.Clear();
+        }
     }
 }

@@ -403,8 +403,7 @@ namespace MessagePack.Internal
                 _serializationContext = new SerializationContext();
             }
 
-            _serializationContext.SerializedObjects.Clear();
-            _serializationContext.ExternalObjects.Clear();
+            _serializationContext.Reset();
 
             return _serializationContext;
         }
@@ -416,7 +415,7 @@ namespace MessagePack.Internal
                 _deserializationContext = new DeserializationContext();
             }
 
-            _deserializationContext.DeserializedObjects.Clear();
+            _deserializationContext.Reset();
 
             return _deserializationContext;
         }

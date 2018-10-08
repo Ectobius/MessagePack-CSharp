@@ -66,5 +66,13 @@ namespace MessagePack.Formatters
 
             return ExternalReferenceChecker(obj);
         }
+
+        public void Reset()
+        {
+            SerializedObjects.Clear();
+            ExternalObjects.Clear();
+            _nextValidId = 0;
+            _nextValidExternalId = 0;
+        }
     }
 }

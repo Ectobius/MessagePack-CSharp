@@ -10,7 +10,7 @@ using BuiltinResolverGetFormatterHelper = MessagePack.Internal.BuiltinResolverGe
 
 namespace MessagePack.Resolvers
 {
-    public sealed class BuiltinResolver : IFormatterResolver
+    public sealed class BuiltinResolver : IFormatterResolver, IUntypedFormatterResolver
     {
         public static readonly IFormatterResolver Instance = new BuiltinResolver();
 
@@ -39,6 +39,11 @@ namespace MessagePack.Resolvers
                 formatter = (IMessagePackFormatter<T>)BuiltinResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
+
+        public IMessagePackUntypedFormatter GetFormatter(Type type)
+        {
+            return (IMessagePackUntypedFormatter)BuiltinResolverGetFormatterHelper.GetFormatter(type);
+        }
     }
 }
 
@@ -49,97 +54,97 @@ namespace MessagePack.Internal
         static readonly Dictionary<Type, object> formatterMap = new Dictionary<Type, object>()
         {
             // Primitive
-            {typeof(Int16), Int16Formatter.Instance},
-            {typeof(Int32), Int32Formatter.Instance},
-            {typeof(Int64), Int64Formatter.Instance},
-            {typeof(UInt16), UInt16Formatter.Instance},
-            {typeof(UInt32), UInt32Formatter.Instance},
-            {typeof(UInt64), UInt64Formatter.Instance},
-            {typeof(Single), SingleFormatter.Instance},
-            {typeof(Double), DoubleFormatter.Instance},
-            {typeof(bool), BooleanFormatter.Instance},
-            {typeof(byte), ByteFormatter.Instance},
-            {typeof(sbyte), SByteFormatter.Instance},
-            {typeof(DateTime), DateTimeFormatter.Instance},
-            {typeof(char), CharFormatter.Instance},
+            {typeof(Int16), UntypedFormatterWrapper.Create(Int16Formatter.Instance)},
+            {typeof(Int32), UntypedFormatterWrapper.Create(Int32Formatter.Instance)},
+            {typeof(Int64), UntypedFormatterWrapper.Create(Int64Formatter.Instance)},
+            {typeof(UInt16), UntypedFormatterWrapper.Create(UInt16Formatter.Instance)},
+            {typeof(UInt32), UntypedFormatterWrapper.Create(UInt32Formatter.Instance)},
+            {typeof(UInt64), UntypedFormatterWrapper.Create(UInt64Formatter.Instance)},
+            {typeof(Single), UntypedFormatterWrapper.Create(SingleFormatter.Instance)},
+            {typeof(Double), UntypedFormatterWrapper.Create(DoubleFormatter.Instance)},
+            {typeof(bool), UntypedFormatterWrapper.Create(BooleanFormatter.Instance)},
+            {typeof(byte), UntypedFormatterWrapper.Create(ByteFormatter.Instance)},
+            {typeof(sbyte), UntypedFormatterWrapper.Create(SByteFormatter.Instance)},
+            {typeof(DateTime), UntypedFormatterWrapper.Create(DateTimeFormatter.Instance)},
+            {typeof(char), UntypedFormatterWrapper.Create(CharFormatter.Instance)},
             
             // Nulllable Primitive
-            {typeof(Nullable<Int16>), NullableInt16Formatter.Instance},
-            {typeof(Nullable<Int32>), NullableInt32Formatter.Instance},
-            {typeof(Nullable<Int64>), NullableInt64Formatter.Instance},
-            {typeof(Nullable<UInt16>), NullableUInt16Formatter.Instance},
-            {typeof(Nullable<UInt32>), NullableUInt32Formatter.Instance},
-            {typeof(Nullable<UInt64>), NullableUInt64Formatter.Instance},
-            {typeof(Nullable<Single>), NullableSingleFormatter.Instance},
-            {typeof(Nullable<Double>), NullableDoubleFormatter.Instance},
-            {typeof(Nullable<bool>), NullableBooleanFormatter.Instance},
-            {typeof(Nullable<byte>), NullableByteFormatter.Instance},
-            {typeof(Nullable<sbyte>), NullableSByteFormatter.Instance},
-            {typeof(Nullable<DateTime>), NullableDateTimeFormatter.Instance},
-            {typeof(Nullable<char>), NullableCharFormatter.Instance},
+            {typeof(Nullable<Int16>), UntypedFormatterWrapper.Create(NullableInt16Formatter.Instance)},
+            {typeof(Nullable<Int32>), UntypedFormatterWrapper.Create(NullableInt32Formatter.Instance)},
+            {typeof(Nullable<Int64>), UntypedFormatterWrapper.Create(NullableInt64Formatter.Instance)},
+            {typeof(Nullable<UInt16>), UntypedFormatterWrapper.Create(NullableUInt16Formatter.Instance)},
+            {typeof(Nullable<UInt32>), UntypedFormatterWrapper.Create(NullableUInt32Formatter.Instance)},
+            {typeof(Nullable<UInt64>), UntypedFormatterWrapper.Create(NullableUInt64Formatter.Instance)},
+            {typeof(Nullable<Single>), UntypedFormatterWrapper.Create(NullableSingleFormatter.Instance)},
+            {typeof(Nullable<Double>), UntypedFormatterWrapper.Create(NullableDoubleFormatter.Instance)},
+            {typeof(Nullable<bool>), UntypedFormatterWrapper.Create(NullableBooleanFormatter.Instance)},
+            {typeof(Nullable<byte>), UntypedFormatterWrapper.Create(NullableByteFormatter.Instance)},
+            {typeof(Nullable<sbyte>), UntypedFormatterWrapper.Create(NullableSByteFormatter.Instance)},
+            {typeof(Nullable<DateTime>), UntypedFormatterWrapper.Create(NullableDateTimeFormatter.Instance)},
+            {typeof(Nullable<char>), UntypedFormatterWrapper.Create(NullableCharFormatter.Instance)},
             
             // StandardClassLibraryFormatter
-            {typeof(string), NullableStringFormatter.Instance},
-            {typeof(decimal), DecimalFormatter.Instance},
-            {typeof(decimal?), new StaticNullableFormatter<decimal>(DecimalFormatter.Instance)},
-            {typeof(TimeSpan), TimeSpanFormatter.Instance},
-            {typeof(TimeSpan?), new StaticNullableFormatter<TimeSpan>(TimeSpanFormatter.Instance)},
-            {typeof(DateTimeOffset), DateTimeOffsetFormatter.Instance},
-            {typeof(DateTimeOffset?), new StaticNullableFormatter<DateTimeOffset>(DateTimeOffsetFormatter.Instance)},
-            {typeof(Guid), GuidFormatter.Instance},
-            {typeof(Guid?), new StaticNullableFormatter<Guid>(GuidFormatter.Instance)},
-            {typeof(Uri), UriFormatter.Instance},
-            {typeof(Version), VersionFormatter.Instance},
-            {typeof(StringBuilder), StringBuilderFormatter.Instance},
-            {typeof(BitArray), BitArrayFormatter.Instance},
+            {typeof(string), UntypedFormatterWrapper.Create(NullableStringFormatter.Instance)},
+            {typeof(decimal), UntypedFormatterWrapper.Create(DecimalFormatter.Instance)},
+            {typeof(decimal?), UntypedFormatterWrapper.Create(new StaticNullableFormatter<decimal>(DecimalFormatter.Instance))},
+            {typeof(TimeSpan), UntypedFormatterWrapper.Create(TimeSpanFormatter.Instance)},
+            {typeof(TimeSpan?), UntypedFormatterWrapper.Create(new StaticNullableFormatter<TimeSpan>(TimeSpanFormatter.Instance))},
+            {typeof(DateTimeOffset), UntypedFormatterWrapper.Create(DateTimeOffsetFormatter.Instance)},
+            {typeof(DateTimeOffset?), UntypedFormatterWrapper.Create(new StaticNullableFormatter<DateTimeOffset>(DateTimeOffsetFormatter.Instance))},
+            {typeof(Guid), UntypedFormatterWrapper.Create(GuidFormatter.Instance)},
+            {typeof(Guid?), UntypedFormatterWrapper.Create(new StaticNullableFormatter<Guid>(GuidFormatter.Instance))},
+            {typeof(Uri), UntypedFormatterWrapper.Create(UriFormatter.Instance)},
+            {typeof(Version), UntypedFormatterWrapper.Create(VersionFormatter.Instance)},
+            {typeof(StringBuilder), UntypedFormatterWrapper.Create(StringBuilderFormatter.Instance)},
+            {typeof(BitArray), UntypedFormatterWrapper.Create(BitArrayFormatter.Instance)},
             
             // special primitive
-            {typeof(byte[]), ByteArrayFormatter.Instance},
+            {typeof(byte[]), UntypedFormatterWrapper.Create(ByteArrayFormatter.Instance)},
             
             // Nil
-            {typeof(Nil), NilFormatter.Instance},
-            {typeof(Nil?), NullableNilFormatter.Instance},
+            {typeof(Nil), UntypedFormatterWrapper.Create(NilFormatter.Instance)},
+            {typeof(Nil?), UntypedFormatterWrapper.Create(NullableNilFormatter.Instance)},
             
             // otpmitized primitive array formatter
-            {typeof(Int16[]), Int16ArrayFormatter.Instance},
-            {typeof(Int32[]), Int32ArrayFormatter.Instance},
-            {typeof(Int64[]), Int64ArrayFormatter.Instance},
-            {typeof(UInt16[]), UInt16ArrayFormatter.Instance},
-            {typeof(UInt32[]), UInt32ArrayFormatter.Instance},
-            {typeof(UInt64[]), UInt64ArrayFormatter.Instance},
-            {typeof(Single[]), SingleArrayFormatter.Instance},
-            {typeof(Double[]), DoubleArrayFormatter.Instance},
-            {typeof(Boolean[]), BooleanArrayFormatter.Instance},
-            {typeof(SByte[]), SByteArrayFormatter.Instance},
-            {typeof(DateTime[]), DateTimeArrayFormatter.Instance},
-            {typeof(Char[]), CharArrayFormatter.Instance},
-            {typeof(string[]), NullableStringArrayFormatter.Instance},
+            {typeof(Int16[]), UntypedFormatterWrapper.Create(Int16ArrayFormatter.Instance)},
+            {typeof(Int32[]), UntypedFormatterWrapper.Create(Int32ArrayFormatter.Instance)},
+            {typeof(Int64[]), UntypedFormatterWrapper.Create(Int64ArrayFormatter.Instance)},
+            {typeof(UInt16[]), UntypedFormatterWrapper.Create(UInt16ArrayFormatter.Instance)},
+            {typeof(UInt32[]), UntypedFormatterWrapper.Create(UInt32ArrayFormatter.Instance)},
+            {typeof(UInt64[]), UntypedFormatterWrapper.Create(UInt64ArrayFormatter.Instance)},
+            {typeof(Single[]), UntypedFormatterWrapper.Create(SingleArrayFormatter.Instance)},
+            {typeof(Double[]), UntypedFormatterWrapper.Create(DoubleArrayFormatter.Instance)},
+            {typeof(Boolean[]), UntypedFormatterWrapper.Create(BooleanArrayFormatter.Instance)},
+            {typeof(SByte[]), UntypedFormatterWrapper.Create(SByteArrayFormatter.Instance)},
+            {typeof(DateTime[]), UntypedFormatterWrapper.Create(DateTimeArrayFormatter.Instance)},
+            {typeof(Char[]), UntypedFormatterWrapper.Create(CharArrayFormatter.Instance)},
+            {typeof(string[]), UntypedFormatterWrapper.Create(NullableStringArrayFormatter.Instance)},
 
             // well known collections
-            {typeof(List<Int16>), new ListFormatter<Int16>()},
-            {typeof(List<Int32>), new ListFormatter<Int32>()},
-            {typeof(List<Int64>), new ListFormatter<Int64>()},
-            {typeof(List<UInt16>), new ListFormatter<UInt16>()},
-            {typeof(List<UInt32>), new ListFormatter<UInt32>()},
-            {typeof(List<UInt64>), new ListFormatter<UInt64>()},
-            {typeof(List<Single>), new ListFormatter<Single>()},
-            {typeof(List<Double>), new ListFormatter<Double>()},
-            {typeof(List<Boolean>), new ListFormatter<Boolean>()},
-            {typeof(List<byte>), new ListFormatter<byte>()},
-            {typeof(List<SByte>), new ListFormatter<SByte>()},
-            {typeof(List<DateTime>), new ListFormatter<DateTime>()},
-            {typeof(List<Char>), new ListFormatter<Char>()},
-            {typeof(List<string>), new ListFormatter<string>()},
+            {typeof(List<Int16>), UntypedFormatterWrapper.Create(new ListFormatter<Int16>())},
+            {typeof(List<Int32>), UntypedFormatterWrapper.Create(new ListFormatter<Int32>())},
+            {typeof(List<Int64>), UntypedFormatterWrapper.Create(new ListFormatter<Int64>())},
+            {typeof(List<UInt16>), UntypedFormatterWrapper.Create(new ListFormatter<UInt16>())},
+            {typeof(List<UInt32>), UntypedFormatterWrapper.Create(new ListFormatter<UInt32>())},
+            {typeof(List<UInt64>), UntypedFormatterWrapper.Create(new ListFormatter<UInt64>())},
+            {typeof(List<Single>), UntypedFormatterWrapper.Create(new ListFormatter<Single>())},
+            {typeof(List<Double>), UntypedFormatterWrapper.Create(new ListFormatter<Double>())},
+            {typeof(List<Boolean>), UntypedFormatterWrapper.Create(new ListFormatter<Boolean>())},
+            {typeof(List<byte>), UntypedFormatterWrapper.Create(new ListFormatter<byte>())},
+            {typeof(List<SByte>), UntypedFormatterWrapper.Create(new ListFormatter<SByte>())},
+            {typeof(List<DateTime>), UntypedFormatterWrapper.Create(new ListFormatter<DateTime>())},
+            {typeof(List<Char>), UntypedFormatterWrapper.Create(new ListFormatter<Char>())},
+            {typeof(List<string>), UntypedFormatterWrapper.Create(new ListFormatter<string>())},
 
-            { typeof(ArraySegment<byte>), ByteArraySegmentFormatter.Instance },
-            { typeof(ArraySegment<byte>?),new StaticNullableFormatter<ArraySegment<byte>>(ByteArraySegmentFormatter.Instance) },
+            { typeof(ArraySegment<byte>), UntypedFormatterWrapper.Create(ByteArraySegmentFormatter.Instance) },
+            { typeof(ArraySegment<byte>?), UntypedFormatterWrapper.Create(new StaticNullableFormatter<ArraySegment<byte>>(ByteArraySegmentFormatter.Instance)) },
 
 #if NETSTANDARD
-            {typeof(System.Numerics.BigInteger), BigIntegerFormatter.Instance},
-            {typeof(System.Numerics.BigInteger?), new StaticNullableFormatter<System.Numerics.BigInteger>(BigIntegerFormatter.Instance)},
-            {typeof(System.Numerics.Complex), ComplexFormatter.Instance},
-            {typeof(System.Numerics.Complex?), new StaticNullableFormatter<System.Numerics.Complex>(ComplexFormatter.Instance)},
-            {typeof(System.Threading.Tasks.Task), TaskUnitFormatter.Instance},
+            {typeof(System.Numerics.BigInteger), UntypedFormatterWrapper.Create(BigIntegerFormatter.Instance)},
+            {typeof(System.Numerics.BigInteger?), UntypedFormatterWrapper.Create(new StaticNullableFormatter<System.Numerics.BigInteger>(BigIntegerFormatter.Instance))},
+            {typeof(System.Numerics.Complex), UntypedFormatterWrapper.Create(ComplexFormatter.Instance)},
+            {typeof(System.Numerics.Complex?), UntypedFormatterWrapper.Create(new StaticNullableFormatter<System.Numerics.Complex>(ComplexFormatter.Instance))},
+            {typeof(System.Threading.Tasks.Task), UntypedFormatterWrapper.Create(TaskUnitFormatter.Instance)},
 #endif
         };
 

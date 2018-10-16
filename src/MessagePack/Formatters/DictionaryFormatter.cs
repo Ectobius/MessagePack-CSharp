@@ -159,9 +159,8 @@ namespace MessagePack.Formatters
                     var key = keyFormatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
                     offset += readSize;
 
-                    if (dictionary.ContainsKey(key) && dictionary[key] != null)
+                    if (dictionary.TryGetValue(key, out var existingValue) && existingValue != null)
                     {
-                        var existingValue = dictionary[key];
                         valueFormatterWithPopulate.Populate(ref existingValue, bytes, offset, formatterResolver, out readSize, context);
                     }
                     else

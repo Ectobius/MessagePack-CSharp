@@ -10,7 +10,9 @@ using System.Collections.Concurrent;
 
 namespace MessagePack.Formatters
 {
-    public sealed class ArrayFormatter<T> : IMessagePackFormatterWithPopulate<T[]>
+    public sealed class ArrayFormatter<T> : 
+        IMessagePackFormatterWithPopulate<T[]>,
+        IMessagePackUntypedFormatterWithPopulate
     {
         public int Serialize(ref byte[] bytes, int offset, T[] value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -106,6 +108,26 @@ namespace MessagePack.Formatters
                 return;
             }
         }
+
+        public int Serialize(ref byte[]           bytes, int offset, object value, IFormatterResolver formatterResolver,
+                             SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[]                 bytes, int offset, IFormatterResolver formatterResolver, out int readSize,
+                                                        DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
+        }
+
+        public void Populate(ref object             value, byte[] bytes, int offset, IFormatterResolver formatterResolver,
+                             out int                readSize,
+                             DeserializationContext context)
+        {
+            var typedValue = (T[])value;
+            Populate(ref typedValue, bytes, offset, formatterResolver, out readSize, context);
+        }
     }
 
     public sealed class ByteArraySegmentFormatter : IMessagePackFormatter<ArraySegment<byte>>
@@ -187,7 +209,9 @@ namespace MessagePack.Formatters
     }
 
     // List<T> is popular format, should avoid abstraction.
-    public sealed class ListFormatter<T> : IMessagePackFormatterWithPopulate<List<T>>
+    public sealed class ListFormatter<T> : 
+        IMessagePackFormatterWithPopulate<List<T>>,
+        IMessagePackUntypedFormatterWithPopulate
     {
         public int Serialize(ref byte[] bytes, int offset, List<T> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -275,6 +299,26 @@ namespace MessagePack.Formatters
                 }
                 readSize = offset - startOffset;
             }
+        }
+
+        public int Serialize(ref byte[]           bytes, int offset, object value, IFormatterResolver formatterResolver,
+                             SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, (List<T>)value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[]                 bytes, int offset, IFormatterResolver formatterResolver, out int readSize,
+                                                        DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
+        }
+
+        public void Populate(ref object             value, byte[] bytes, int offset, IFormatterResolver formatterResolver,
+                             out int                readSize,
+                             DeserializationContext context)
+        {
+            var typedValue = (List<T>)value;
+            Populate(ref typedValue, bytes, offset, formatterResolver, out readSize, context);
         }
     }
 
@@ -556,7 +600,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class HashSetFormatter<T> : CollectionFormatterBase<T, HashSet<T>, HashSet<T>.Enumerator, HashSet<T>>
+    public sealed class HashSetFormatter<T> : 
+        CollectionFormatterBase<T, HashSet<T>, HashSet<T>.Enumerator, HashSet<T>>,
+        IMessagePackUntypedFormatter
     {
         protected override int? GetCount(HashSet<T> sequence)
         {
@@ -581,6 +627,18 @@ namespace MessagePack.Formatters
         protected override HashSet<T>.Enumerator GetSourceEnumerator(HashSet<T> source)
         {
             return source.GetEnumerator();
+        }
+
+        public int Serialize(ref byte[]           bytes, int offset, object value, IFormatterResolver formatterResolver,
+                             SerializationContext context)
+        {
+            return base.Serialize(ref bytes, offset, (HashSet<T>)value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[]                 bytes, int offset, IFormatterResolver formatterResolver, out int readSize,
+                                  DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
         }
     }
 

@@ -17,7 +17,7 @@ namespace MessagePack.Formatters
     var t = "Tuple<" + ts + ">"; 
 #>
 
-    public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
+    public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>, IMessagePackUntypedFormatter
     {
         public int Serialize(ref byte[] bytes, int offset, <#= t #> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -60,6 +60,16 @@ namespace MessagePack.Formatters
                 readSize = offset - startOffset;
                 return new Tuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
             }
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, (<#= t #>) value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
         }
     }
 

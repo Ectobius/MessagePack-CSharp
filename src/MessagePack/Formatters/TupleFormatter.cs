@@ -5,7 +5,7 @@ using System;
 namespace MessagePack.Formatters
 {
 
-    public sealed class TupleFormatter<T1> : IMessagePackFormatter<Tuple<T1>>
+    public sealed class TupleFormatter<T1> : IMessagePackFormatter<Tuple<T1>>, IMessagePackUntypedFormatter
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -45,10 +45,20 @@ namespace MessagePack.Formatters
                 return new Tuple<T1>(item1);
             }
         }
+
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, (Tuple<T1>) value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
+        }
     }
 
 
-    public sealed class TupleFormatter<T1, T2> : IMessagePackFormatter<Tuple<T1, T2>>
+    public sealed class TupleFormatter<T1, T2> : IMessagePackFormatter<Tuple<T1, T2>>, IMessagePackUntypedFormatter
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -91,10 +101,20 @@ namespace MessagePack.Formatters
                 return new Tuple<T1, T2>(item1, item2);
             }
         }
+
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, (Tuple<T1, T2>) value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
+        }
     }
 
 
-    public sealed class TupleFormatter<T1, T2, T3> : IMessagePackFormatter<Tuple<T1, T2, T3>>
+    public sealed class TupleFormatter<T1, T2, T3> : IMessagePackFormatter<Tuple<T1, T2, T3>>, IMessagePackUntypedFormatter
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2, T3> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -140,10 +160,20 @@ namespace MessagePack.Formatters
                 return new Tuple<T1, T2, T3>(item1, item2, item3);
             }
         }
+
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, (Tuple<T1, T2, T3>) value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
+        }
     }
 
 
-    public sealed class TupleFormatter<T1, T2, T3, T4> : IMessagePackFormatter<Tuple<T1, T2, T3, T4>>
+    public sealed class TupleFormatter<T1, T2, T3, T4> : IMessagePackFormatter<Tuple<T1, T2, T3, T4>>, IMessagePackUntypedFormatter
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2, T3, T4> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -192,10 +222,20 @@ namespace MessagePack.Formatters
                 return new Tuple<T1, T2, T3, T4>(item1, item2, item3, item4);
             }
         }
+
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, (Tuple<T1, T2, T3, T4>) value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
+        }
     }
 
 
-    public sealed class TupleFormatter<T1, T2, T3, T4, T5> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5>>
+    public sealed class TupleFormatter<T1, T2, T3, T4, T5> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5>>, IMessagePackUntypedFormatter
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2, T3, T4, T5> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -247,10 +287,20 @@ namespace MessagePack.Formatters
                 return new Tuple<T1, T2, T3, T4, T5>(item1, item2, item3, item4, item5);
             }
         }
+
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, (Tuple<T1, T2, T3, T4, T5>) value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
+        }
     }
 
 
-    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6>>
+    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6>>, IMessagePackUntypedFormatter
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2, T3, T4, T5, T6> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -305,10 +355,20 @@ namespace MessagePack.Formatters
                 return new Tuple<T1, T2, T3, T4, T5, T6>(item1, item2, item3, item4, item5, item6);
             }
         }
+
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, (Tuple<T1, T2, T3, T4, T5, T6>) value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
+        }
     }
 
 
-    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7>>
+    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7>>, IMessagePackUntypedFormatter
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2, T3, T4, T5, T6, T7> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -366,10 +426,20 @@ namespace MessagePack.Formatters
                 return new Tuple<T1, T2, T3, T4, T5, T6, T7>(item1, item2, item3, item4, item5, item6, item7);
             }
         }
+
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, (Tuple<T1, T2, T3, T4, T5, T6, T7>) value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
+        }
     }
 
 
-    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>>
+    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>>, IMessagePackUntypedFormatter
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2, T3, T4, T5, T6, T7, TRest> value, IFormatterResolver formatterResolver, SerializationContext context)
         {
@@ -429,6 +499,16 @@ namespace MessagePack.Formatters
                 readSize = offset - startOffset;
                 return new Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>(item1, item2, item3, item4, item5, item6, item7, item8);
             }
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver, SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, (Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>) value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
         }
     }
 

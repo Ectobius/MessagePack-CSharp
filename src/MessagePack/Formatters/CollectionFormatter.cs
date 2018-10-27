@@ -322,7 +322,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public abstract class CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection> : IMessagePackFormatter<TCollection>
+    public abstract class CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection> : IMessagePackFormatter<TCollection>, IMessagePackUntypedFormatter
         where TCollection : IEnumerable<TElement>
         where TEnumerator : IEnumerator<TElement>
     {
@@ -427,6 +427,18 @@ namespace MessagePack.Formatters
                     }
                 }
             }
+        }
+
+        public int Serialize(ref byte[]           bytes, int offset, object value, IFormatterResolver formatterResolver,
+                             SerializationContext context)
+        {
+            return Serialize(ref bytes, offset, (TCollection)value, formatterResolver, context);
+        }
+
+        object IMessagePackUntypedFormatter.Deserialize(byte[]                 bytes, int offset, IFormatterResolver formatterResolver, out int readSize,
+                                                        DeserializationContext context)
+        {
+            return Deserialize(bytes, offset, formatterResolver, out readSize, context);
         }
 
         public TCollection Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)

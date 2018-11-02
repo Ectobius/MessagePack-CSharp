@@ -1188,7 +1188,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class InterfaceSetFormatter<T> : CollectionFormatterBase<T, HashSet<T>, ISet<T>>
+    public sealed class InterfaceSetFormatter<T> : CollectionFormatterBase<T, HashSet<T>, ISet<T>>, IMessagePackFormatterWithPopulate<ISet<T>>
     {
         protected override void Add(HashSet<T> collection, int index, T value)
         {
@@ -1203,6 +1203,38 @@ namespace MessagePack.Formatters
         protected override HashSet<T> Create(int count)
         {
             return new HashSet<T>();
+        }
+
+        public void Populate(ref ISet<T> value, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize, DeserializationContext context)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                value = null;
+                return;
+            }
+            else
+            {
+                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+
+                value.Clear();
+
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                for(int i = 0; i < len; i++)
+                {
+                    if(i >= value.Count)
+                    {
+                        value.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
+                    }
+
+                    offset += readSize;
+                }
+
+                readSize = offset - startOffset;
+            }
         }
     }
 

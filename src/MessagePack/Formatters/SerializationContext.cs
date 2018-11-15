@@ -4,26 +4,14 @@ using System.Text;
 
 namespace MessagePack.Formatters
 {
-    public class SerializationContext
+    public class SerializationContext : MetaContext
     {
-        private int _nextValidId = 0;
+        private int _nextValidId         = 0;
         private int _nextValidExternalId = 0;
 
-        public SerializationContext()
-        {
-            ExternalObjectsByIds = new Dictionary<int, object>();
-        }
-
-        public SerializationContext(SerializationOptions options)
-        {
-            ExternalObjectsByIds = options.ExternalObjectsByIds;
-            ExternalReferenceChecker = options.ExternalReferenceChecker;
-        }
-
-        public Dictionary<object, int> SerializedObjects { get; } = new Dictionary<object, int>(1000);
-        public Func<object, bool> ExternalReferenceChecker { get; set; }
+        public Dictionary<object, int> SerializedObjects    { get; } = new Dictionary<object, int>(1000);
         public Dictionary<int, object> ExternalObjectsByIds { get; set; }
-        public Dictionary<object, int> ExternalObjects { get; } = new Dictionary<object, int>();
+        public Dictionary<object, int> ExternalObjects      { get; } = new Dictionary<object, int>();
 
         public object ExtraData { get; set; }
 
@@ -46,7 +34,7 @@ namespace MessagePack.Formatters
 
         public int PutToExternalObjects(object obj)
         {
-            if (ExternalObjects.ContainsKey(obj))
+            if(ExternalObjects.ContainsKey(obj))
             {
                 return ExternalObjects[obj];
             }
@@ -57,16 +45,6 @@ namespace MessagePack.Formatters
             return id;
         }
 
-        public bool CheckIfExternal(object obj)
-        {
-            if (ExternalReferenceChecker == null || ExternalObjectsByIds == null)
-            {
-                return false;
-            }
-
-            return ExternalReferenceChecker(obj);
-        }
-
         public void Reset()
         {
             SerializedObjects.Clear();
@@ -74,5 +52,30 @@ namespace MessagePack.Formatters
             _nextValidId = 0;
             _nextValidExternalId = 0;
         }
+
+        public SerializationContext(IModelFactory modelFactory, bool onlyKnownRefs) :
+            base(modelFactory, onlyKnownRefs) { }
+    }
+
+
+    public class MetaContext
+    {
+        public readonly Dictionary<int, object> ExternalObjectsByIds = new Dictionary<int, object>();
+        public          bool                    OnlyKnownRefs;
+        public readonly IModelFactory           ModelFactory;
+
+        public MetaContext(IModelFactory modelFactory, bool onlyKnownRefs)
+        {
+            ModelFactory = modelFactory;
+            OnlyKnownRefs = onlyKnownRefs;
+        }
+    }
+
+    public interface IModelFactory
+    {
+        MetaContext MetaContext { get; set; }
+        T           CreateModel<T>();
+        T           GetOrCreateById<T>(int nodeId, int netId) where T : class;
+        T           GetById<T>(int         nodeId, int netId) where T : class;
     }
 }

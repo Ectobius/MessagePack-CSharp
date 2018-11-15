@@ -12,7 +12,7 @@
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
         <DefineConstants>TRACE;DEBUG;NETSTANDARD</DefineConstants>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-        <LangVersion>7</LangVersion>
+        <LangVersion>7.2</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'  AND '$(TargetFramework)' != 'net45'">
@@ -117,5 +117,9 @@
         <DesignTime>True</DesignTime>
         <AutoGen>True</AutoGen>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="ModelCreation" />
     </ItemGroup>
 </Project>

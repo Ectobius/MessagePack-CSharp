@@ -22,39 +22,39 @@ namespace MessagePack
                 defaultResolver = CompositeResolver.Instance;
             }
 
-            public static byte[] Serialize(object obj)
+            public static byte[] Serialize(object obj, SerializationContext context)
             {
-                return MessagePackSerializer.Serialize(obj, defaultResolver);
+                return MessagePackSerializer.Serialize(obj, defaultResolver, context);
             }
 
-            public static void Serialize(Stream stream, object obj)
+            public static void Serialize(Stream stream, object obj, SerializationContext context)
             {
-                MessagePackSerializer.Serialize(stream, obj, defaultResolver);
+                MessagePackSerializer.Serialize(stream, obj, defaultResolver, context);
             }
 
-            public static System.Threading.Tasks.Task SerializeAsync(Stream stream, object obj)
+            public static System.Threading.Tasks.Task SerializeAsync(Stream stream, object obj, SerializationContext context)
             {
-                return MessagePackSerializer.SerializeAsync(stream, obj, defaultResolver);
+                return MessagePackSerializer.SerializeAsync(stream, obj, defaultResolver, context);
             }
 
-            public static object Deserialize(byte[] bytes)
+            public static object Deserialize(byte[] bytes, DeserializationContext context)
             {
-                return MessagePackSerializer.Deserialize<object>(bytes, defaultResolver);
+                return MessagePackSerializer.Deserialize<object>(bytes, defaultResolver, context);
             }
 
-            public static object Deserialize(Stream stream)
+            public static object Deserialize(Stream stream, DeserializationContext context)
             {
-                return MessagePackSerializer.Deserialize<object>(stream, defaultResolver);
+                return MessagePackSerializer.Deserialize<object>(stream, defaultResolver, context);
             }
 
-            public static object Deserialize(Stream stream, bool readStrict)
+            public static object Deserialize(Stream stream, bool readStrict, DeserializationContext context)
             {
-                return MessagePackSerializer.Deserialize<object>(stream, defaultResolver, readStrict);
+                return MessagePackSerializer.Deserialize<object>(stream, defaultResolver, readStrict, context);
             }
 
-            public static System.Threading.Tasks.Task<object> DeserializeAsync(Stream stream)
+            public static System.Threading.Tasks.Task<object> DeserializeAsync(Stream stream, DeserializationContext context)
             {
-                return MessagePackSerializer.DeserializeAsync<object>(stream, defaultResolver);
+                return MessagePackSerializer.DeserializeAsync<object>(stream, defaultResolver, context);
             }
 
             class CompositeResolver : IFormatterResolver

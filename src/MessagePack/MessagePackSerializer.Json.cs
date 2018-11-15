@@ -13,17 +13,17 @@ namespace MessagePack
         /// <summary>
         /// Dump to JSON string.
         /// </summary>
-        public static string ToJson<T>(T obj)
+        public static string ToJson<T>(T obj, SerializationContext context)
         {
-            return ToJson(Serialize(obj));
+            return ToJson(Serialize(obj, context));
         }
 
         /// <summary>
         /// Dump to JSON string.
         /// </summary>
-        public static string ToJson<T>(T obj, IFormatterResolver resolver)
+        public static string ToJson<T>(T obj, IFormatterResolver resolver, SerializationContext context)
         {
-            return ToJson(Serialize(obj, resolver));
+            return ToJson(Serialize(obj, resolver, context));
         }
 
         /// <summary>

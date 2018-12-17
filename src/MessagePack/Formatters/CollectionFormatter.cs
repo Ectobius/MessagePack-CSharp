@@ -22,15 +22,13 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
-
                 var startOffset = offset;
 
                 offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
 
                 for (int i = 0; i < value.Length; i++)
                 {
-                    offset += formatter.Serialize(ref bytes, offset, value[i], formatterResolver, context);
+                    offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, value[i], formatterResolver, context);
                 }
 
                 return offset - startOffset;
@@ -47,14 +45,13 @@ namespace MessagePack.Formatters
             else
             {
                 var startOffset = offset;
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
 
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var array = new T[len];
                 for (int i = 0; i < array.Length; i++)
                 {
-                    array[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                    array[i] = context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context);
                     offset += readSize;
                 }
                 readSize = offset - startOffset;
@@ -74,17 +71,11 @@ namespace MessagePack.Formatters
             else
             {
                 var startOffset = offset;
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
 
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
 
                 var valueLength = value.Length;
-                var formatterWithPopulate = formatter as IMessagePackFormatterWithPopulate<T>;
-                if (formatterWithPopulate == null)
-                {
-                    valueLength = 0;
-                }
 
                 if (valueLength < len)
                 {
@@ -96,11 +87,12 @@ namespace MessagePack.Formatters
                     if (i < valueLength)
                     {
                         var item = value[i];
-                        formatterWithPopulate.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
+                        context.MetaInfoFormatter.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
+                        value[i] = item;
                     }
                     else
                     {
-                        value[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        value[i] = context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context);
                         offset += readSize;
                     }
                 }
@@ -178,7 +170,6 @@ namespace MessagePack.Formatters
             else
             {
                 var startOffset = offset;
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
 
                 offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Count);
 
@@ -186,7 +177,7 @@ namespace MessagePack.Formatters
                 for (int i = 0; i < value.Count; i++)
                 {
                     var item = array[value.Offset + i];
-                    offset += formatter.Serialize(ref bytes, offset, item, formatterResolver, context);
+                    offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, item, formatterResolver, context);
                 }
 
                 return offset - startOffset;
@@ -222,14 +213,13 @@ namespace MessagePack.Formatters
             else
             {
                 var startOffset = offset;
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
 
                 var c = value.Count;
                 offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, c);
 
                 for (int i = 0; i < c; i++)
                 {
-                    offset += formatter.Serialize(ref bytes, offset, value[i], formatterResolver, context);
+                    offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, value[i], formatterResolver, context);
                 }
 
                 return offset - startOffset;
@@ -246,14 +236,13 @@ namespace MessagePack.Formatters
             else
             {
                 var startOffset = offset;
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
 
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var list = new List<T>(len);
                 for (int i = 0; i < len; i++)
                 {
-                    list.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
+                    list.Add(context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context));
                     offset += readSize;
                 }
                 readSize = offset - startOffset;
@@ -272,13 +261,6 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
-                var formatterWithPopulate = formatter as IMessagePackFormatterWithPopulate<T>;
-                if (formatterWithPopulate == null)
-                {
-                    value.Clear();
-                }
-
                 var startOffset = offset;
 
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
@@ -287,12 +269,16 @@ namespace MessagePack.Formatters
                 {
                     if (i >= value.Count)
                     {
-                        value.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
+                        value.Add(context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context));
                     }
                     else
                     {
                         var item = value[i];
-                        formatterWithPopulate.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
+                        context.MetaInfoFormatter.Populate<T>(ref item, bytes, offset, formatterResolver, out readSize, context);
+                        if(!item.Equals(value[i]))
+                        {
+                            value[i] = item;
+                        }
                     }
 
                     offset += readSize;
@@ -339,13 +325,12 @@ namespace MessagePack.Formatters
                 if (array != null)
                 {
                     var startOffset = offset;
-                    var formatter = formatterResolver.GetFormatterWithVerify<TElement>();
 
                     offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, array.Length);
 
                     foreach (var item in array)
                     {
-                        offset += formatter.Serialize(ref bytes, offset, item, formatterResolver, context);
+                        offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, item, formatterResolver, context);
                     }
 
                     return offset - startOffset;
@@ -353,7 +338,6 @@ namespace MessagePack.Formatters
                 else
                 {
                     var startOffset = offset;
-                    var formatter = formatterResolver.GetFormatterWithVerify<TElement>();
 
                     // knows count or not.
                     var seqCount = GetCount(value);
@@ -368,9 +352,9 @@ namespace MessagePack.Formatters
                             while (e.MoveNext())
                             {
 #if NETSTANDARD
-                                offset += formatter.Serialize(ref bytes, offset, e.Current, formatterResolver, context);
+                                offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, e.Current, formatterResolver, context);
 #else
-                                offset += formatter.Serialize(ref bytes, (int)offset, (TElement)e.Current, (IFormatterResolver)formatterResolver, context);
+                                offset += context.MetaInfoFormatter.Serialize(ref bytes, (int)offset, (TElement)e.Current, (IFormatterResolver)formatterResolver, context);
 #endif
                             }
                         }
@@ -399,9 +383,9 @@ namespace MessagePack.Formatters
                             {
                                 count++;
 #if NETSTANDARD
-                                var writeSize = formatter.Serialize(ref bytes, offset, e.Current, formatterResolver, context);
+                                var writeSize = context.MetaInfoFormatter.Serialize(ref bytes, offset, e.Current, formatterResolver, context);
 #else
-                                var writeSize = formatter.Serialize(ref bytes, (int)offset, (TElement)e.Current, (IFormatterResolver)formatterResolver);
+                                var writeSize = context.MetaInfoFormatter.Serialize(ref bytes, (int)offset, (TElement)e.Current, (IFormatterResolver)formatterResolver);
 #endif
                                 moveCount += writeSize;
                                 offset += writeSize;
@@ -451,7 +435,6 @@ namespace MessagePack.Formatters
             else
             {
                 var startOffset = offset;
-                var formatter = formatterResolver.GetFormatterWithVerify<TElement>();
 
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
@@ -459,7 +442,7 @@ namespace MessagePack.Formatters
                 var list = Create(len);
                 for (int i = 0; i < len; i++)
                 {
-                    Add(list, i, formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
+                    Add(list, i, context.MetaInfoFormatter.Deserialize<TElement>(bytes, offset, formatterResolver, out readSize, context));
                     offset += readSize;
                 }
                 readSize = offset - startOffset;
@@ -700,13 +683,6 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
-                var formatterWithPopulate = formatter as IMessagePackFormatterWithPopulate<T>;
-                if (formatterWithPopulate == null)
-                {
-                    value.Clear();
-                }
-
                 var startOffset = offset;
 
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
@@ -715,12 +691,13 @@ namespace MessagePack.Formatters
                 {
                     if (i >= value.Count)
                     {
-                        value.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
+                        value.Add(context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context));
                     }
                     else
                     {
                         var item = value[i];
-                        formatterWithPopulate.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
+                        context.MetaInfoFormatter.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
+                        value[i] = item;
                     }
 
                     offset += readSize;
@@ -779,8 +756,8 @@ namespace MessagePack.Formatters
             {
                 var startOffset = offset;
                 offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, 2);
-                offset += formatterResolver.GetFormatterWithVerify<TKey>().Serialize(ref bytes, offset, value.Key, formatterResolver, context);
-                offset += formatterResolver.GetFormatterWithVerify<IEnumerable<TElement>>().Serialize(ref bytes, offset, value, formatterResolver, context);
+                offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, value.Key, formatterResolver, context);
+                offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, value, formatterResolver, context);
                 return offset - startOffset;
             }
         }
@@ -800,10 +777,10 @@ namespace MessagePack.Formatters
 
                 if (count != 2) throw new InvalidOperationException("Invalid Grouping format.");
 
-                var key = formatterResolver.GetFormatterWithVerify<TKey>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                var key = context.MetaInfoFormatter.Deserialize<TKey>(bytes, offset, formatterResolver, out readSize, context);
                 offset += readSize;
 
-                var value = formatterResolver.GetFormatterWithVerify<IEnumerable<TElement>>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                var value = context.MetaInfoFormatter.Deserialize<IEnumerable<TElement>>(bytes, offset, formatterResolver, out readSize, context);
                 offset += readSize;
 
                 readSize = offset - startOffset;
@@ -914,13 +891,12 @@ namespace MessagePack.Formatters
                 return 1;
             }
 
-            var formatter = formatterResolver.GetFormatterWithVerify<object>();
             var startOffset = offset;
 
             offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Count);
             foreach (var item in value)
             {
-                offset += formatter.Serialize(ref bytes, offset, item, formatterResolver, context);
+                offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, item, formatterResolver, context);
             }
 
             return offset - startOffset;
@@ -934,7 +910,6 @@ namespace MessagePack.Formatters
                 return default(T);
             }
 
-            var formatter = formatterResolver.GetFormatterWithVerify<object>();
             var startOffset = offset;
 
             var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
@@ -943,7 +918,7 @@ namespace MessagePack.Formatters
             var list = new T();
             for (int i = 0; i < count; i++)
             {
-                list.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
+                list.Add(context.MetaInfoFormatter.Deserialize<object>(bytes, offset, formatterResolver, out readSize, context));
                 offset += readSize;
             }
 
@@ -969,13 +944,12 @@ namespace MessagePack.Formatters
                 return 1;
             }
 
-            var formatter = formatterResolver.GetFormatterWithVerify<object>();
             var startOffset = offset;
 
             offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Count);
             foreach (var item in value)
             {
-                offset += formatter.Serialize(ref bytes, offset, item, formatterResolver, context);
+                offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, item, formatterResolver, context);
             }
 
             return offset - startOffset;
@@ -989,7 +963,6 @@ namespace MessagePack.Formatters
                 return default(IList);
             }
 
-            var formatter = formatterResolver.GetFormatterWithVerify<object>();
             var startOffset = offset;
 
             var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
@@ -998,7 +971,7 @@ namespace MessagePack.Formatters
             var list = new object[count];
             for (int i = 0; i < count; i++)
             {
-                list[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                list[i] = context.MetaInfoFormatter.Deserialize<object>(bytes, offset, formatterResolver, out readSize, context);
                 offset += readSize;
             }
 
@@ -1018,14 +991,13 @@ namespace MessagePack.Formatters
                 return 1;
             }
 
-            var formatter = formatterResolver.GetFormatterWithVerify<object>();
             var startOffset = offset;
 
             offset += MessagePackBinary.WriteMapHeader(ref bytes, offset, value.Count);
             foreach (DictionaryEntry item in value)
             {
-                offset += formatter.Serialize(ref bytes, offset, item.Key, formatterResolver, context);
-                offset += formatter.Serialize(ref bytes, offset, item.Value, formatterResolver, context);
+                offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, item.Key, formatterResolver, context);
+                offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, item.Value, formatterResolver, context);
             }
 
             return offset - startOffset;
@@ -1039,7 +1011,6 @@ namespace MessagePack.Formatters
                 return null;
             }
 
-            var formatter = formatterResolver.GetFormatterWithVerify<object>();
             var startOffset = offset;
 
             var count = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
@@ -1048,9 +1019,9 @@ namespace MessagePack.Formatters
             var dict = new T();
             for (int i = 0; i < count; i++)
             {
-                var key = formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                var key = context.MetaInfoFormatter.Deserialize<object>(bytes, offset, formatterResolver, out readSize, context);
                 offset += readSize;
-                var value = formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                var value = context.MetaInfoFormatter.Deserialize<object>(bytes, offset, formatterResolver, out readSize, context);
                 offset += readSize;
                 dict.Add(key, value);
             }
@@ -1077,14 +1048,13 @@ namespace MessagePack.Formatters
                 return 1;
             }
 
-            var formatter = formatterResolver.GetFormatterWithVerify<object>();
             var startOffset = offset;
 
             offset += MessagePackBinary.WriteMapHeader(ref bytes, offset, value.Count);
             foreach (DictionaryEntry item in value)
             {
-                offset += formatter.Serialize(ref bytes, offset, item.Key, formatterResolver, context);
-                offset += formatter.Serialize(ref bytes, offset, item.Value, formatterResolver, context);
+                offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, item.Key, formatterResolver, context);
+                offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, item.Value, formatterResolver, context);
             }
 
             return offset - startOffset;
@@ -1098,7 +1068,6 @@ namespace MessagePack.Formatters
                 return null;
             }
 
-            var formatter = formatterResolver.GetFormatterWithVerify<object>();
             var startOffset = offset;
 
             var count = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
@@ -1107,9 +1076,9 @@ namespace MessagePack.Formatters
             var dict = new Dictionary<object, object>(count);
             for (int i = 0; i < count; i++)
             {
-                var key = formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                var key = context.MetaInfoFormatter.Deserialize<object>(bytes, offset, formatterResolver, out readSize, context);
                 offset += readSize;
-                var value = formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                var value = context.MetaInfoFormatter.Deserialize<object>(bytes, offset, formatterResolver, out readSize, context);
                 offset += readSize;
                 dict.Add(key, value);
             }
@@ -1215,8 +1184,6 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
-
                 value.Clear();
 
                 var startOffset = offset;
@@ -1227,7 +1194,7 @@ namespace MessagePack.Formatters
                 {
                     if(i >= value.Count)
                     {
-                        value.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
+                        value.Add(context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context));
                     }
 
                     offset += readSize;

@@ -25,8 +25,6 @@ namespace MessagePack.Formatters
             else
             {
                 var startOffset = offset;
-                var keyFormatter = formatterResolver.GetFormatterWithVerify<TKey>();
-                var valueFormatter = formatterResolver.GetFormatterWithVerify<TValue>();
 
                 int count;
                 {
@@ -57,8 +55,8 @@ namespace MessagePack.Formatters
                     while (e.MoveNext())
                     {
                         var item = e.Current;
-                        offset += keyFormatter.Serialize(ref bytes, offset, item.Key, formatterResolver, context);
-                        offset += valueFormatter.Serialize(ref bytes, offset, item.Value, formatterResolver, context);
+                        offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, item.Key, formatterResolver, context);
+                        offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, item.Value, formatterResolver, context);
                     }
                 }
                 finally
@@ -80,8 +78,6 @@ namespace MessagePack.Formatters
             else
             {
                 var startOffset = offset;
-                var keyFormatter = formatterResolver.GetFormatterWithVerify<TKey>();
-                var valueFormatter = formatterResolver.GetFormatterWithVerify<TValue>();
 
                 var len = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
                 offset += readSize;
@@ -89,10 +85,10 @@ namespace MessagePack.Formatters
                 var dict = Create(len);
                 for (int i = 0; i < len; i++)
                 {
-                    var key = keyFormatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                    var key = context.MetaInfoFormatter.Deserialize<TKey>(bytes, offset, formatterResolver, out readSize, context);
                     offset += readSize;
 
-                    var value = valueFormatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                    var value = context.MetaInfoFormatter.Deserialize<TValue>(bytes, offset, formatterResolver, out readSize, context);
                     offset += readSize;
 
                     Add(dict, i, key, value);
@@ -142,30 +138,23 @@ namespace MessagePack.Formatters
             else
             {
                 var startOffset = offset;
-                var keyFormatter = formatterResolver.GetFormatterWithVerify<TKey>();
-                var valueFormatter = formatterResolver.GetFormatterWithVerify<TValue>();
-                var valueFormatterWithPopulate = valueFormatter as IMessagePackFormatterWithPopulate<TValue>;
-
-                if (valueFormatterWithPopulate == null)
-                {
-                    dictionary.Clear();
-                }
 
                 var len = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
                 offset += readSize;
 
                 for (int i = 0; i < len; i++)
                 {
-                    var key = keyFormatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                    var key = context.MetaInfoFormatter.Deserialize<TKey>(bytes, offset, formatterResolver, out readSize, context);
                     offset += readSize;
 
                     if (dictionary.TryGetValue(key, out var existingValue) && existingValue != null)
                     {
-                        valueFormatterWithPopulate.Populate(ref existingValue, bytes, offset, formatterResolver, out readSize, context);
+                        context.MetaInfoFormatter.Populate(ref existingValue, bytes, offset, formatterResolver, out readSize, context);
+                        dictionary[key] = existingValue;
                     }
                     else
                     {
-                        var valueForKey = valueFormatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                        var valueForKey = context.MetaInfoFormatter.Deserialize<TValue>(bytes, offset, formatterResolver, out readSize, context); 
                         dictionary.Add(key, valueForKey);
                     }
 

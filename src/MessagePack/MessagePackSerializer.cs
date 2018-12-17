@@ -62,10 +62,9 @@ namespace MessagePack
         public static byte[] Serialize<T>(T obj, IFormatterResolver resolver, SerializationContext context)
         {
             if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
-            var len = SerializeByFormatter(formatter, ref buffer, 0, obj, resolver, context);
+            var len = context.MetaInfoFormatter.Serialize(ref buffer, 0, obj, resolver, context);
 
             // do not return MemoryPool.Buffer.
             return MessagePackBinary.FastCloneWithResize(buffer, len);
@@ -85,10 +84,9 @@ namespace MessagePack
         public static ArraySegment<byte> SerializeUnsafe<T>(T obj, IFormatterResolver resolver, SerializationContext context)
         {
             if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
-            var len = SerializeByFormatter(formatter, ref buffer, 0, obj, resolver, context);
+            var len = context.MetaInfoFormatter.Serialize(ref buffer, 0, obj, resolver, context);
 
             // return raw memory pool, unsafe!
             return new ArraySegment<byte>(buffer, 0, len);
@@ -108,10 +106,9 @@ namespace MessagePack
         public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver, SerializationContext context)
         {
             if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
-            var len = SerializeByFormatter(formatter, ref buffer, 0, obj, resolver, context);
+            var len = context.MetaInfoFormatter.Serialize(ref buffer, 0, obj, resolver, context);
 
             // do not need resize.
             stream.Write(buffer, 0, len);
@@ -122,8 +119,7 @@ namespace MessagePack
         /// </summary>
         public static int Serialize<T>(ref byte[] bytes, int offset, T value, IFormatterResolver resolver, SerializationContext context)
         {
-            var formatter = resolver.GetFormatterWithVerify<T>();
-            return SerializeByFormatter(formatter, ref bytes, offset, value, resolver, context);
+            return context.MetaInfoFormatter.Serialize(ref bytes, offset, value, resolver, context);
         }
 
 #if NETSTANDARD
@@ -142,13 +138,12 @@ namespace MessagePack
         public static async System.Threading.Tasks.Task SerializeAsync<T>(Stream stream, T obj, IFormatterResolver resolver, SerializationContext context)
         {
             if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
 
             var rentBuffer = BufferPool.Default.Rent();
             try
             {
                 var buffer = rentBuffer;
-                var len = SerializeByFormatter(formatter, ref buffer, 0, obj, resolver, context);
+                var len = context.MetaInfoFormatter.Serialize(ref buffer, 0, obj, resolver, context);
 
                 // do not need resize.
                 await stream.WriteAsync(buffer, 0, len).ConfigureAwait(false);
@@ -161,12 +156,6 @@ namespace MessagePack
 
 #endif
 
-        private static int SerializeByFormatter<T>(IMessagePackFormatter<T> formatter, ref byte[] buffer, int offset,
-            T value, IFormatterResolver resolver, SerializationContext context)
-        {
-            return formatter.Serialize(ref buffer, offset, value, resolver, context);
-        }
-
         public static T Deserialize<T>(byte[] bytes, DeserializationContext context)
         {
             return Deserialize<T>(bytes, defaultResolver, context);
@@ -175,10 +164,8 @@ namespace MessagePack
         public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver, DeserializationContext context)
         {
             if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
 
-            int readSize;
-            return DeserializeByFormatter(formatter, bytes, 0, resolver, out readSize, context);
+            return context.MetaInfoFormatter.Deserialize<T>(bytes, 0, resolver, out _, context);
         }
 
         public static T Deserialize<T>(ArraySegment<byte> bytes, DeserializationContext context)
@@ -189,10 +176,8 @@ namespace MessagePack
         public static T Deserialize<T>(ArraySegment<byte> bytes, IFormatterResolver resolver, DeserializationContext context)
         {
             if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
 
-            int readSize;
-            return DeserializeByFormatter(formatter, bytes.Array, bytes.Offset, resolver, out readSize, context);
+            return context.MetaInfoFormatter.Deserialize<T>(bytes.Array, 0, resolver, out _, context);
         }
 
         public static T Deserialize<T>(Stream stream, DeserializationContext context)
@@ -213,7 +198,6 @@ namespace MessagePack
         public static T Deserialize<T>(Stream stream, IFormatterResolver resolver, bool readStrict, DeserializationContext context)
         {
             if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
 
             if (!readStrict)
             {
@@ -226,8 +210,7 @@ namespace MessagePack
                     ArraySegment<byte> buffer;
                     if (ms.TryGetBuffer(out buffer))
                     {
-                        int readSize;
-                        return DeserializeByFormatter(formatter, buffer.Array, buffer.Offset, resolver, out readSize, context);
+                        return context.MetaInfoFormatter.Deserialize<T>(buffer.Array, 0, resolver, out _, context);
                     }
                 }
 #endif
@@ -238,16 +221,13 @@ namespace MessagePack
 
                     FillFromStream(stream, ref buffer);
 
-                    int readSize;
-                    return DeserializeByFormatter(formatter, buffer, 0, resolver, out readSize, context);
+                    return context.MetaInfoFormatter.Deserialize<T>(buffer, 0, resolver, out _, context);
                 }
             }
             else
             {
-                int _;
                 var bytes = MessagePackBinary.ReadMessageBlockFromStreamUnsafe(stream, false, out _);
-                int readSize;
-                return DeserializeByFormatter(formatter, bytes, 0, resolver, out readSize, context);
+                return context.MetaInfoFormatter.Deserialize<T>(bytes, 0, resolver, out _, context);
             }
         }
 
@@ -307,12 +287,6 @@ namespace MessagePack
 
             int readSize;
             PopulateByFormatter(ref value, formatter, bytes, 0, resolver, out readSize, context);
-        }
-
-        private static T DeserializeByFormatter<T>(IMessagePackFormatter<T> formatter, byte[] bytes, int offset, IFormatterResolver resolver,
-            out int readSize, DeserializationContext context)
-        {
-            return formatter.Deserialize(bytes, offset, resolver, out readSize, context);
         }
 
         private static void PopulateByFormatter<T>(ref T value, IMessagePackFormatter<T> formatter, byte[] bytes, int offset, IFormatterResolver resolver,

@@ -31,7 +31,7 @@ namespace MessagePack.Formatters
                 offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= i #>);
 
 <# for(var j = 1; j <= i; j++) { #>
-                offset += formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Serialize(ref bytes, offset, value.<#= toItem(j) #>, formatterResolver, context);
+                offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, value.<#= toItem(j) #>, formatterResolver, context);
 <# } #>
 
                 return offset - startOffset;
@@ -53,7 +53,7 @@ namespace MessagePack.Formatters
                 offset += readSize;
 
 <# for(var j = 1; j <= i; j++) { #>
-                var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                var item<#= j #> = context.MetaInfoFormatter.Deserialize<<#= toT(j) #>>(bytes, offset, formatterResolver, out readSize, context);
                 offset += readSize;
 <# } #>
             

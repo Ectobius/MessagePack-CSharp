@@ -118,8 +118,4 @@
         <AutoGen>True</AutoGen>
       </Compile>
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="ModelCreation" />
-    </ItemGroup>
 </Project>

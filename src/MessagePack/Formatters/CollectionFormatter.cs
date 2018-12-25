@@ -26,9 +26,20 @@ namespace MessagePack.Formatters
 
                 offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
 
-                for (int i = 0; i < value.Length; i++)
+                if(context.MetaInfoFormatter.NeedsMetaHeader(typeof(T)))
                 {
-                    offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, value[i], formatterResolver, context);
+                    for(int i = 0; i < value.Length; i++)
+                    {
+                        offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, value[i], formatterResolver, context, forceWriteHeader: true);
+                    }
+                }
+                else
+                {
+                    var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                    for(int i = 0; i < value.Length; i++)
+                    {
+                        offset += formatter.Serialize(ref bytes, offset, value[i], formatterResolver, context);
+                    }
                 }
 
                 return offset - startOffset;
@@ -49,11 +60,28 @@ namespace MessagePack.Formatters
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var array = new T[len];
-                for (int i = 0; i < array.Length; i++)
+
+                if(context.MetaInfoFormatter.NeedsMetaHeader(typeof(T)))
                 {
-                    array[i] = context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context);
-                    offset += readSize;
+                    for(int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = context.MetaInfoFormatter.Deserialize<T>(
+                            bytes, offset, formatterResolver, out readSize, context, forceReadHeader: true);
+                        offset += readSize;
+                    }
                 }
+                else
+                {
+                    var formatter = formatterResolver.GetFormatterWithVerify<T>();
+
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = formatter.Deserialize(
+                            bytes, offset, formatterResolver, out readSize, context);
+                        offset += readSize;
+                    }
+                }
+
                 readSize = offset - startOffset;
                 return array;
             }
@@ -82,20 +110,44 @@ namespace MessagePack.Formatters
                     value = new T[len];
                 }
 
-                for (int i = 0; i < len; i++)
+                if (context.MetaInfoFormatter.NeedsMetaHeader(typeof(T)))
                 {
-                    if (i < valueLength)
+                    for (int i = 0; i < len; i++)
                     {
-                        var item = value[i];
-                        context.MetaInfoFormatter.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
-                        value[i] = item;
-                    }
-                    else
-                    {
-                        value[i] = context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context);
-                        offset += readSize;
+                        if (i < valueLength)
+                        {
+                            var item = value[i];
+                            context.MetaInfoFormatter.Populate(ref item, bytes, offset, formatterResolver, out readSize, context, forceReadHeader: true);
+                            value[i] = item;
+                        }
+                        else
+                        {
+                            value[i] = context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context, forceReadHeader: true);
+                            offset += readSize;
+                        }
                     }
                 }
+                else
+                {
+                    var formatter = (IMessagePackFormatterWithPopulate<T>)formatterResolver.GetFormatterWithVerify<T>();
+
+                    for (int i = 0; i < len; i++)
+                    {
+                        if (i < valueLength)
+                        {
+                            var item = value[i];
+                            formatter.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
+                            value[i] = item;
+                        }
+                        else
+                        {
+                            value[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
+                            offset += readSize;
+                        }
+                    }
+                }
+
+                
                 readSize = offset - startOffset;
                 return;
             }
@@ -217,9 +269,20 @@ namespace MessagePack.Formatters
                 var c = value.Count;
                 offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, c);
 
-                for (int i = 0; i < c; i++)
+                if(context.MetaInfoFormatter.NeedsMetaHeader(typeof(T)))
                 {
-                    offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, value[i], formatterResolver, context);
+                    for(int i = 0; i < c; i++)
+                    {
+                        offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, value[i], formatterResolver, context, forceWriteHeader: true);
+                    }
+                }
+                else
+                {
+                    var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                    for (int i = 0; i < c; i++)
+                    {
+                        offset += formatter.Serialize(ref bytes, offset, value[i], formatterResolver, context);
+                    }
                 }
 
                 return offset - startOffset;
@@ -240,11 +303,25 @@ namespace MessagePack.Formatters
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var list = new List<T>(len);
-                for (int i = 0; i < len; i++)
+
+                if (context.MetaInfoFormatter.NeedsMetaHeader(typeof(T)))
                 {
-                    list.Add(context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context));
-                    offset += readSize;
+                    for (int i = 0; i < len; i++)
+                    {
+                        list.Add(context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context, forceReadHeader: true));
+                        offset += readSize;
+                    }
                 }
+                else
+                {
+                    var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                    for (int i = 0; i < len; i++)
+                    {
+                        list.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
+                        offset += readSize;
+                    }
+                }
+
                 readSize = offset - startOffset;
                 return list;
             }
@@ -265,24 +342,55 @@ namespace MessagePack.Formatters
 
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
-                for (int i = 0; i < len; i++)
-                {
-                    if (i >= value.Count)
-                    {
-                        value.Add(context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context));
-                    }
-                    else
-                    {
-                        var item = value[i];
-                        context.MetaInfoFormatter.Populate<T>(ref item, bytes, offset, formatterResolver, out readSize, context);
-                        if(!item.Equals(value[i]))
-                        {
-                            value[i] = item;
-                        }
-                    }
 
-                    offset += readSize;
+                if(context.MetaInfoFormatter.NeedsMetaHeader(typeof(T)))
+                {
+                    for(int i = 0; i < len; i++)
+                    {
+                        if(i >= value.Count)
+                        {
+                            value.Add(context.MetaInfoFormatter.Deserialize<T>(
+                                          bytes, offset, formatterResolver, out readSize, context, forceReadHeader: true));
+                        }
+                        else
+                        {
+                            var item = value[i];
+                            context.MetaInfoFormatter.Populate<T>(ref item, bytes, offset, formatterResolver,
+                                                                  out readSize, context, forceReadHeader: true);
+                            if(!item.Equals(value[i]))
+                            {
+                                value[i] = item;
+                            }
+                        }
+
+                        offset += readSize;
+                    }
                 }
+                else
+                {
+                    var formatter = (IMessagePackFormatterWithPopulate<T>)formatterResolver.GetFormatterWithVerify<T>();
+
+                    for(int i = 0; i < len; i++)
+                    {
+                        if(i >= value.Count)
+                        {
+                            value.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
+                        }
+                        else
+                        {
+                            var item = value[i];
+                            formatter.Populate(ref item, bytes, offset, formatterResolver,
+                                                                  out readSize, context);
+                            if(!item.Equals(value[i]))
+                            {
+                                value[i] = item;
+                            }
+                        }
+
+                        offset += readSize;
+                    }
+                }
+                
                 readSize = offset - startOffset;
             }
         }
@@ -328,9 +436,22 @@ namespace MessagePack.Formatters
 
                     offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, array.Length);
 
-                    foreach (var item in array)
+                    if(context.MetaInfoFormatter.NeedsMetaHeader(typeof(TElement)))
                     {
-                        offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, item, formatterResolver, context);
+                        foreach(var item in array)
+                        {
+                            offset += context.MetaInfoFormatter.Serialize(
+                                ref bytes, offset, item, formatterResolver, context,
+                                forceWriteHeader: true);
+                        }
+                    }
+                    else
+                    {
+                        var formatter = formatterResolver.GetFormatterWithVerify<TElement>();
+                        foreach(var item in array)
+                        {
+                            offset += formatter.Serialize(ref bytes, offset, item, formatterResolver, context);
+                        }
                     }
 
                     return offset - startOffset;
@@ -338,6 +459,9 @@ namespace MessagePack.Formatters
                 else
                 {
                     var startOffset = offset;
+
+                    var needsMetaHeader = context.MetaInfoFormatter.NeedsMetaHeader(typeof(TElement));
+                    var formatter = formatterResolver.GetFormatterWithVerify<TElement>();
 
                     // knows count or not.
                     var seqCount = GetCount(value);
@@ -352,7 +476,14 @@ namespace MessagePack.Formatters
                             while (e.MoveNext())
                             {
 #if NETSTANDARD
-                                offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, e.Current, formatterResolver, context);
+                                if(needsMetaHeader)
+                                {
+                                    offset += context.MetaInfoFormatter.Serialize(ref bytes, offset, e.Current, formatterResolver, context, forceWriteHeader: true);
+                                }
+                                else
+                                {
+                                    offset += formatter.Serialize(ref bytes, offset, e.Current, formatterResolver, context);
+                                }
 #else
                                 offset += context.MetaInfoFormatter.Serialize(ref bytes, (int)offset, (TElement)e.Current, (IFormatterResolver)formatterResolver, context);
 #endif
@@ -383,7 +514,15 @@ namespace MessagePack.Formatters
                             {
                                 count++;
 #if NETSTANDARD
-                                var writeSize = context.MetaInfoFormatter.Serialize(ref bytes, offset, e.Current, formatterResolver, context);
+                                int writeSize = 0;
+                                if(needsMetaHeader)
+                                {
+                                    writeSize = context.MetaInfoFormatter.Serialize(ref bytes, offset, e.Current, formatterResolver, context, forceWriteHeader: true);
+                                }
+                                else
+                                {
+                                    writeSize = formatter.Serialize(ref bytes, offset, e.Current, formatterResolver, context);
+                                }
 #else
                                 var writeSize = context.MetaInfoFormatter.Serialize(ref bytes, (int)offset, (TElement)e.Current, (IFormatterResolver)formatterResolver);
 #endif
@@ -440,11 +579,26 @@ namespace MessagePack.Formatters
                 offset += readSize;
 
                 var list = Create(len);
-                for (int i = 0; i < len; i++)
+
+                if(context.MetaInfoFormatter.NeedsMetaHeader(typeof(TElement)))
                 {
-                    Add(list, i, context.MetaInfoFormatter.Deserialize<TElement>(bytes, offset, formatterResolver, out readSize, context));
-                    offset += readSize;
+                    for (int i = 0; i < len; i++)
+                    {
+                        Add(list, i, context.MetaInfoFormatter.Deserialize<TElement>(bytes, offset, formatterResolver, out readSize, context, forceReadHeader: true));
+                        offset += readSize;
+                    }
                 }
+                else
+                {
+                    var formatter = formatterResolver.GetFormatterWithVerify<TElement>();
+
+                    for (int i = 0; i < len; i++)
+                    {
+                        Add(list, i, formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
+                        offset += readSize;
+                    }
+                }
+
                 readSize = offset - startOffset;
 
                 return Complete(list);
@@ -687,21 +841,50 @@ namespace MessagePack.Formatters
 
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
-                for (int i = 0; i < len; i++)
-                {
-                    if (i >= value.Count)
-                    {
-                        value.Add(context.MetaInfoFormatter.Deserialize<T>(bytes, offset, formatterResolver, out readSize, context));
-                    }
-                    else
-                    {
-                        var item = value[i];
-                        context.MetaInfoFormatter.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
-                        value[i] = item;
-                    }
 
-                    offset += readSize;
+                if(context.MetaInfoFormatter.NeedsMetaHeader(typeof(T)))
+                {
+                    for(int i = 0; i < len; i++)
+                    {
+                        if(i >= value.Count)
+                        {
+                            value.Add(context.MetaInfoFormatter.Deserialize<T>(
+                                          bytes, offset, formatterResolver, out readSize, context, forceReadHeader: true));
+                        }
+                        else
+                        {
+                            var item = value[i];
+                            context.MetaInfoFormatter.Populate(ref item, bytes, offset, formatterResolver, out readSize,
+                                                               context, forceReadHeader: true);
+                            value[i] = item;
+                        }
+
+                        offset += readSize;
+                    }
                 }
+                else
+                {
+                    var formatter = (IMessagePackFormatterWithPopulate<T>)formatterResolver.GetFormatterWithVerify<T>();
+
+                    for(int i = 0; i < len; i++)
+                    {
+                        if(i >= value.Count)
+                        {
+                            value.Add(formatter.Deserialize(
+                                          bytes, offset, formatterResolver, out readSize, context));
+                        }
+                        else
+                        {
+                            var item = value[i];
+                            formatter.Populate(ref item, bytes, offset, formatterResolver, out readSize,
+                                                               context);
+                            value[i] = item;
+                        }
+
+                        offset += readSize;
+                    }
+                }
+
                 readSize = offset - startOffset;
             }
         }

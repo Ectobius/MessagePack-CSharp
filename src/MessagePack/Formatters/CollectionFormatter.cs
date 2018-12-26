@@ -129,14 +129,15 @@ namespace MessagePack.Formatters
                 }
                 else
                 {
-                    var formatter = (IMessagePackFormatterWithPopulate<T>)formatterResolver.GetFormatterWithVerify<T>();
+                    var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                    var formatterWithPopulate = formatter as IMessagePackFormatterWithPopulate<T>;
 
                     for (int i = 0; i < len; i++)
                     {
-                        if (i < valueLength)
+                        if (i < valueLength && formatterWithPopulate != null)
                         {
                             var item = value[i];
-                            formatter.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
+                            formatterWithPopulate.Populate(ref item, bytes, offset, formatterResolver, out readSize, context);
                             value[i] = item;
                         }
                         else
@@ -368,7 +369,8 @@ namespace MessagePack.Formatters
                 }
                 else
                 {
-                    var formatter = (IMessagePackFormatterWithPopulate<T>)formatterResolver.GetFormatterWithVerify<T>();
+                    var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                    var formatterWithPopulate = formatter as IMessagePackFormatterWithPopulate<T>;
 
                     for(int i = 0; i < len; i++)
                     {
@@ -376,15 +378,20 @@ namespace MessagePack.Formatters
                         {
                             value.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context));
                         }
-                        else
+                        else if(formatterWithPopulate != null)
                         {
+
                             var item = value[i];
-                            formatter.Populate(ref item, bytes, offset, formatterResolver,
+                            formatterWithPopulate.Populate(ref item, bytes, offset, formatterResolver,
                                                                   out readSize, context);
                             if(!item.Equals(value[i]))
                             {
                                 value[i] = item;
                             }
+                        }
+                        else
+                        {
+                            value[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize, context);
                         }
 
                         offset += readSize;
@@ -864,9 +871,10 @@ namespace MessagePack.Formatters
                 }
                 else
                 {
-                    var formatter = (IMessagePackFormatterWithPopulate<T>)formatterResolver.GetFormatterWithVerify<T>();
+                    var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                    var formatterWithPopulate = formatter as IMessagePackFormatterWithPopulate<T>;
 
-                    for(int i = 0; i < len; i++)
+                    for (int i = 0; i < len; i++)
                     {
                         if(i >= value.Count)
                         {
@@ -875,10 +883,18 @@ namespace MessagePack.Formatters
                         }
                         else
                         {
-                            var item = value[i];
-                            formatter.Populate(ref item, bytes, offset, formatterResolver, out readSize,
-                                                               context);
-                            value[i] = item;
+                            if(formatterWithPopulate != null)
+                            {
+                                var item = value[i];
+                                formatterWithPopulate.Populate(ref item, bytes, offset, formatterResolver, out readSize,
+                                                   context);
+                                value[i] = item;
+                            }
+                            else
+                            {
+                                value[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize,
+                                                                 context);
+                            }
                         }
 
                         offset += readSize;

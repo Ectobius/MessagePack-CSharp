@@ -18,18 +18,18 @@ namespace MessagePack
         /// <summary>
         /// Serialize to binary with default resolver.
         /// </summary>
-        public static byte[] Serialize<T>(T obj)
+        public static byte[] Serialize<T>(T obj, SerializationContext context)
         {
-            return Serialize(obj, null);
+            return Serialize(obj, null, context);
         }
 
         /// <summary>
         /// Serialize to binary with specified resolver.
         /// </summary>
-        public static byte[] Serialize<T>(T obj, IFormatterResolver resolver)
+        public static byte[] Serialize<T>(T obj, IFormatterResolver resolver, SerializationContext context)
         {
             if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
-            var buffer = SerializeCore(obj, resolver);
+            var buffer = SerializeCore(obj, resolver, context);
 
             return MessagePackBinary.FastCloneWithResize(buffer.Array, buffer.Count);
         }
@@ -37,54 +37,20 @@ namespace MessagePack
         /// <summary>
         /// Serialize to stream.
         /// </summary>
-        public static void Serialize<T>(Stream stream, T obj)
+        public static void Serialize<T>(Stream stream, T obj, SerializationContext context)
         {
-            Serialize(stream, obj, null);
+            Serialize(stream, obj, null, context);
         }
 
         /// <summary>
         /// Serialize to stream with specified resolver.
         /// </summary>
-        public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
+        public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver, SerializationContext context)
         {
             if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
-            var buffer = SerializeCore(obj, resolver);
+            var buffer = SerializeCore(obj, resolver, context);
 
             stream.Write(buffer.Array, 0, buffer.Count);
-        }
-
-        public static int SerializeToBlock<T>(ref byte[] bytes, int offset, T obj, IFormatterResolver resolver)
-        {
-            var serializedData = MessagePackSerializer.SerializeUnsafe(obj, resolver);
-
-            if (serializedData.Count < NotCompressionSize)
-            {
-                // can't write direct, shoganai...
-                MessagePackBinary.EnsureCapacity(ref bytes, offset, serializedData.Count);
-                Buffer.BlockCopy(serializedData.Array, serializedData.Offset, bytes, offset, serializedData.Count);
-                return serializedData.Count;
-            }
-            else
-            {
-                var maxOutCount = LZ4Codec.MaximumOutputLength(serializedData.Count);
-
-                MessagePackBinary.EnsureCapacity(ref bytes, offset, 6 + 5 + maxOutCount); // (ext header size + fixed length size)
-
-                // acquire ext header position
-                var extHeaderOffset = offset;
-                offset += (6 + 5);
-
-                // write body
-                var lz4Length = LZ4Codec.Encode(serializedData.Array, serializedData.Offset, serializedData.Count, bytes, offset, bytes.Length - offset);
-
-                // write extension header(always 6 bytes)
-                extHeaderOffset += MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref bytes, extHeaderOffset, (sbyte)ExtensionTypeCode, lz4Length + 5);
-
-                // write length(always 5 bytes)
-                MessagePackBinary.WriteInt32ForceInt32Block(ref bytes, extHeaderOffset, serializedData.Count);
-
-                return 6 + 5 + lz4Length;
-            }
         }
 
         public static byte[] ToLZ4Binary(ArraySegment<byte> messagePackBinary)
@@ -93,9 +59,9 @@ namespace MessagePack
             return MessagePackBinary.FastCloneWithResize(buffer.Array, buffer.Count);
         }
 
-        static ArraySegment<byte> SerializeCore<T>(T obj, IFormatterResolver resolver)
+        static ArraySegment<byte> SerializeCore<T>(T obj, IFormatterResolver resolver, SerializationContext context)
         {
-            var serializedData = MessagePackSerializer.SerializeUnsafe(obj, resolver);
+            var serializedData = MessagePackSerializer.SerializeUnsafe(obj, resolver, context);
             return ToLZ4BinaryCore(serializedData);
         }
 
@@ -132,54 +98,54 @@ namespace MessagePack
             }
         }
 
-        public static T Deserialize<T>(byte[] bytes)
+        public static T Deserialize<T>(byte[] bytes, DeserializationContext context)
         {
-            return Deserialize<T>(bytes, null);
+            return Deserialize<T>(bytes, null, context);
         }
 
-        public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver)
+        public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver, DeserializationContext context)
         {
-            return DeserializeCore<T>(new ArraySegment<byte>(bytes, 0, bytes.Length), resolver);
+            return DeserializeCore<T>(new ArraySegment<byte>(bytes, 0, bytes.Length), resolver, context);
         }
 
-        public static T Deserialize<T>(ArraySegment<byte> bytes)
+        public static T Deserialize<T>(ArraySegment<byte> bytes, DeserializationContext context)
         {
-            return DeserializeCore<T>(bytes, null);
+            return DeserializeCore<T>(bytes, null, context);
         }
 
-        public static T Deserialize<T>(ArraySegment<byte> bytes, IFormatterResolver resolver)
+        public static T Deserialize<T>(ArraySegment<byte> bytes, IFormatterResolver resolver, DeserializationContext context)
         {
-            return DeserializeCore<T>(bytes, resolver);
+            return DeserializeCore<T>(bytes, resolver, context);
         }
 
-        public static T Deserialize<T>(Stream stream)
+        public static T Deserialize<T>(Stream stream, DeserializationContext context)
         {
-            return Deserialize<T>(stream, null);
+            return Deserialize<T>(stream, null, context);
         }
 
-        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
+        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver, DeserializationContext context)
         {
-            return Deserialize<T>(stream, resolver, false);
+            return Deserialize<T>(stream, resolver, false, context);
         }
 
-        public static T Deserialize<T>(Stream stream, bool readStrict)
+        public static T Deserialize<T>(Stream stream, bool readStrict, DeserializationContext context)
         {
-            return Deserialize<T>(stream, MessagePackSerializer.DefaultResolver, readStrict);
+            return Deserialize<T>(stream, MessagePackSerializer.DefaultResolver, readStrict, context);
         }
 
-        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver, bool readStrict)
+        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver, bool readStrict, DeserializationContext context)
         {
             if (!readStrict)
             {
                 var buffer = MessagePack.Internal.InternalMemoryPool.GetBuffer(); // use MessagePackSerializer.Pool!
                 var len = FillFromStream(stream, ref buffer);
-                return DeserializeCore<T>(new ArraySegment<byte>(buffer, 0, len), resolver);
+                return DeserializeCore<T>(new ArraySegment<byte>(buffer, 0, len), resolver, context);
             }
             else
             {
                 int blockSize;
                 var bytes = MessagePackBinary.ReadMessageBlockFromStreamUnsafe(stream, false, out blockSize);
-                return DeserializeCore<T>(new ArraySegment<byte>(bytes, 0, blockSize), resolver);
+                return DeserializeCore<T>(new ArraySegment<byte>(bytes, 0, blockSize), resolver, context);
             }
         }
 
@@ -292,12 +258,9 @@ namespace MessagePack
             }
         }
 
-        static T DeserializeCore<T>(ArraySegment<byte> bytes, IFormatterResolver resolver)
+        static T DeserializeCore<T>(ArraySegment<byte> bytes, IFormatterResolver resolver, DeserializationContext context)
         {
             if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
-
-            var context = new DeserializationContext();
 
             int readSize;
             if (MessagePackBinary.GetMessagePackType(bytes.Array, bytes.Offset) == MessagePackType.Extension)
@@ -320,11 +283,11 @@ namespace MessagePack
                     var len = bytes.Count + bytes.Offset - offset;
                     LZ4Codec.Decode(bytes.Array, offset, len, buffer, 0, length);
 
-                    return formatter.Deserialize(buffer, 0, resolver, out readSize, context);
+                    return context.MetaInfoFormatter.Deserialize<T>(buffer, 0, resolver, out readSize, context);
                 }
             }
 
-            return formatter.Deserialize(bytes.Array, bytes.Offset, resolver, out readSize, context);
+            return context.MetaInfoFormatter.Deserialize<T>(bytes.Array, bytes.Offset, resolver, out _, context);
         }
 
         static int FillFromStream(Stream input, ref byte[] buffer)
